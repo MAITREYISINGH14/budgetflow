@@ -1,0 +1,110 @@
+<p class="page-toolbar__lead intro">Preferences are saved in this browser. Transactions and budgets are stored in MockAPI.</p>
+
+<div class="settings">
+  <section class="panel setting" aria-labelledby="currency-title">
+    <div class="setting__text">
+      <h2 class="panel__title" id="currency-title">Display currency</h2>
+      <p>Amounts are recorded in rupees and converted for display with the latest European Central Bank rate.</p>
+    </div>
+    <div class="setting__control">
+      <label class="sr-only" for="setting-currency">Display currency</label>
+      <select id="setting-currency" class="select" (change)="setCurrency($event)">
+        @for (option of currencies; track option.code) {
+          <option [value]="option.code" [selected]="option.code === settings().currency">{{ option.label }}</option>
+        }
+      </select>
+      <p class="field__hint">Example: {{ preview() }}</p>
+      @if (currency.ratesStatus() === 'loading') {
+        <p class="field__hint">Fetching exchange rate…</p>
+      } @else if (rateText(); as text) {
+        <p class="field__hint">{{ text }}</p>
+      }
+      @if (rateFailed()) {
+        <p class="field__error">Exchange rate unavailable, so amounts are shown in rupees.</p>
+        <button type="button" class="btn btn--ghost" (click)="retryRates()">Try again</button>
+      }
+    </div>
+  </section>
+
+  <section class="panel setting" aria-labelledby="type-title">
+    <div class="setting__text">
+      <h2 class="panel__title" id="type-title">Default transaction type</h2>
+      <p>Pre-selected when you add a new transaction.</p>
+    </div>
+    <fieldset class="setting__control field">
+      <legend class="sr-only">Default transaction type</legend>
+      <div class="segmented">
+        <label>
+          <input type="radio" name="default-type" [checked]="settings().defaultTransactionType === 'EXPENSE'" (change)="setDefaultType('EXPENSE')" />
+          Expense
+        </label>
+        <label>
+          <input type="radio" name="default-type" [checked]="settings().defaultTransactionType === 'INCOME'" (change)="setDefaultType('INCOME')" />
+          Income
+        </label>
+      </div>
+    </fieldset>
+  </section>
+
+  <section class="panel setting" aria-labelledby="date-title">
+    <div class="setting__text">
+      <h2 class="panel__title" id="date-title">Default transaction date</h2>
+      <p>Useful when entering several receipts from the same day.</p>
+    </div>
+    <fieldset class="setting__control field">
+      <legend class="sr-only">Default transaction date</legend>
+      <div class="segmented">
+        <label>
+          <input type="radio" name="date-behavior" [checked]="settings().defaultDateBehavior === 'today'" (change)="setDateBehavior('today')" />
+          Today
+        </label>
+        <label>
+          <input type="radio" name="date-behavior" [checked]="settings().defaultDateBehavior === 'last-used'" (change)="setDateBehavior('last-used')" />
+          Last date used
+        </label>
+      </div>
+    </fieldset>
+  </section>
+
+  <div class="settings__footer">
+    <button type="button" class="btn btn--secondary" (click)="resetPreferences()">Restore default preferences</button>
+  </div>
+
+  <section class="panel data" aria-labelledby="data-title">
+    <div class="setting__text">
+      <h2 class="panel__title" id="data-title">Data</h2>
+      <p class="data__url">Connected to <code>{{ apiUrl }}</code></p>
+    </div>
+
+    @if (store.status() === 'ready') {
+      <dl class="data__counts">
+        <div>
+          <dt>Transactions</dt>
+          <dd class="figure">{{ store.transactions().length }} / {{ recordLimit }}</dd>
+        </div>
+        <div>
+          <dt>Budgets</dt>
+          <dd class="figure">{{ store.budgets().length }} / {{ recordLimit }}</dd>
+        </div>
+      </dl>
+      <p class="field__hint">MockAPI's free plan stores up to {{ recordLimit }} records per resource.</p>
+
+      @if (progress(); as p) {
+        <div class="data__progress" role="status">
+          <span>{{ p.label }}… {{ p.done }} of {{ p.total }}</span>
+          <div class="data__bar" aria-hidden="true"><div [style.width.%]="progressPercent()"></div></div>
+        </div>
+      } @else {
+        <div class="data__actions">
+          <button type="button" class="btn btn--secondary" (click)="loadDemoData()">Load demo data</button>
+          <button type="button" class="btn btn--danger" (click)="deleteAllData()" [disabled]="!hasData()">Delete all data</button>
+        </div>
+      }
+    } @else if (store.status() === 'error') {
+      <p class="field__error">{{ store.error() }}</p>
+      <button type="button" class="btn btn--secondary" (click)="store.load(true)">Try again</button>
+    } @else {
+      <p class="field__hint">Loading…</p>
+    }
+  </section>
+</div>
