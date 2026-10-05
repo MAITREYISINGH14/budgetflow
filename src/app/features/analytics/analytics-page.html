@@ -1,0 +1,178 @@
+<div class="page-toolbar">
+  <fieldset class="field range-picker">
+    <legend class="sr-only">Period</legend>
+    <div class="segmented">
+      @for (opt of options; track opt.value) {
+        <label>
+          <input type="radio" name="range" [value]="opt.value" [checked]="option() === opt.value" (change)="selectOption(opt.value)" />
+          {{ opt.label }}
+        </label>
+      }
+    </div>
+  </fieldset>
+  <p class="page-toolbar__lead">{{ rangeLabel() }}</p>
+</div>
+
+@if (option() === 'custom') {
+  <div class="panel custom-range">
+    <div class="field">
+      <label class="field__label" for="analytics-from">From</label>
+      <input
+        id="analytics-from"
+        class="input"
+        type="date"
+        [max]="today"
+        [value]="customFrom()"
+        (change)="customFrom.set(inputValue($event))"
+      />
+    </div>
+    <div class="field">
+      <label class="field__label" for="analytics-to">To</label>
+      <input
+        id="analytics-to"
+        class="input"
+        type="date"
+        [max]="today"
+        [value]="customTo()"
+        (change)="customTo.set(inputValue($event))"
+      />
+    </div>
+    @if (!range()) {
+      <p class="field__error custom-range__error" role="alert">Choose a start date on or before the end date.</p>
+    }
+  </div>
+}
+
+@if (store.status() === 'error') {
+  <div class="panel">
+    <bf-state-message
+      kind="error"
+      title="Unable to load analytics."
+      [message]="store.error()"
+      actionLabel="Try again"
+      (action)="store.load(true)"
+    />
+  </div>
+} @else if (store.status() !== 'ready') {
+  <div class="panel">
+    <bf-state-message kind="loading" title="Loading analytics…" />
+  </div>
+} @else {
+  <div class="analytics">
+    @if (summary(); as s) {
+      <section class="panel figures" aria-label="Totals for the selected period">
+        <div class="figures__item">
+          <span class="figures__label">Income</span>
+          <span class="figures__value figure figures__value--income">{{ s.income | money }}</span>
+        </div>
+        <div class="figures__item">
+          <span class="figures__label">Expenses</span>
+          <span class="figures__value figure">{{ s.expenses | money }}</span>
+        </div>
+        <div class="figures__item">
+          <span class="figures__label">Net</span>
+          <span class="figures__value figure" [class.is-negative]="s.balance < 0">{{ s.balance | money }}</span>
+        </div>
+        <div class="figures__item">
+          <span class="figures__label">Savings rate</span>
+          <span class="figures__value figure" [class.is-negative]="s.savingsRate < 0">{{ s.savingsRate }}%</span>
+        </div>
+        <div class="figures__item">
+          <span class="figures__label">Average monthly spend</span>
+          <span class="figures__value figure">{{ averageMonthlySpend() | money }}</span>
+        </div>
+      </section>
+    }
+
+    @if (categories().length === 0) {
+      <div class="panel">
+        <bf-state-message title="No expenses in this period." message="Pick a longer period or add transactions." />
+      </div>
+    } @else {
+      <div class="grid grid--split">
+        <section class="panel" aria-labelledby="top-title">
+          <div class="panel__header">
+            <h2 class="panel__title" id="top-title">Top spending categories</h2>
+          </div>
+          <ol class="top-list panel__body">
+            @for (item of topCategories(); track item.categoryId; let rank = $index) {
+              <li>
+                <span class="top-list__rank figure">{{ rank + 1 }}</span>
+                <div class="top-list__main">
+                  <div class="top-list__row">
+                    <span class="top-list__name">{{ item.name }}</span>
+                    <span class="figure">{{ item.total | money }}</span>
+                  </div>
+                  <div class="share" aria-hidden="true">
+                    <div class="share__fill" [style.width.%]="item.percentage" [style.background]="item.color"></div>
+                  </div>
+                  <span class="top-list__share">{{ item.percentage }}% of spending</span>
+                </div>
+              </li>
+            }
+          </ol>
+        </section>
+
+        <section class="panel" aria-labelledby="category-spending-title">
+          <div class="panel__header">
+            <h2 class="panel__title" id="category-spending-title">Spending by category</h2>
+          </div>
+          <div class="panel__body">
+            <bf-chart [config]="categoryChart()" label="Spending by category for the selected period" [height]="categoryChartHeight()" />
+          </div>
+        </section>
+      </div>
+    }
+
+    <div class="grid">
+      <section class="panel" aria-labelledby="analytics-trend-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="analytics-trend-title">Monthly spending trend</h2>
+        </div>
+        <div class="panel__body">
+          <bf-chart [config]="trendChart()" label="Expenses per month in the selected period" [height]="240" />
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="analytics-ie-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="analytics-ie-title">Income vs expenses</h2>
+        </div>
+        <div class="panel__body">
+          <bf-chart [config]="incomeExpenseChart()" label="Income and expenses per month in the selected period" [height]="240" />
+        </div>
+      </section>
+    </div>
+
+    @if (categories().length) {
+      <section class="panel" aria-labelledby="breakdown-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="breakdown-title">Category breakdown</h2>
+        </div>
+        <div class="table-scroll">
+          <table class="breakdown">
+            <thead>
+              <tr>
+                <th scope="col">Category</th>
+                <th scope="col" class="num">Spent</th>
+                <th scope="col" class="num">Share</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of categories(); track item.categoryId) {
+                <tr>
+                  <td>
+                    <span class="swatch" [style.background]="item.color" aria-hidden="true"></span>
+                    {{ item.name }}
+                  </td>
+                  <td class="num">{{ item.total | money }}</td>
+                  <td class="num">{{ item.percentage }}%</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+  </div>
+}
