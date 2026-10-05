@@ -1,0 +1,200 @@
+<div class="page-toolbar">
+  <div class="month-switcher" role="group" aria-label="Dashboard month">
+    <button type="button" class="icon-btn" (click)="changeMonth(-1)" aria-label="Previous month">
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+    </button>
+    <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
+    <button type="button" class="icon-btn" (click)="changeMonth(1)" [disabled]="isCurrentMonth()" aria-label="Next month">
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+    </button>
+  </div>
+  <div class="page-toolbar__actions">
+    <button type="button" class="btn" (click)="addTransaction()" [disabled]="store.status() !== 'ready'">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      Add transaction
+    </button>
+  </div>
+</div>
+
+@if (store.status() === 'error') {
+  <div class="panel">
+    <bf-state-message
+      kind="error"
+      title="Unable to load the dashboard."
+      [message]="store.error()"
+      actionLabel="Try again"
+      (action)="store.load(true)"
+    />
+  </div>
+} @else if (store.status() !== 'ready') {
+  <div class="panel">
+    <bf-state-message kind="loading" title="Loading your dashboard…" />
+  </div>
+} @else if (store.transactions().length === 0) {
+  <div class="panel">
+    <bf-state-message
+      title="No transactions yet."
+      message="Add your first transaction, or load demo data from Settings to explore the app."
+      actionLabel="Add transaction"
+      (action)="addTransaction()"
+    />
+  </div>
+} @else {
+  <div class="dashboard">
+    @if (summary(); as s) {
+      <section class="ledger panel" [attr.aria-label]="'Summary for ' + monthLabel()">
+        <div class="ledger__item ledger__item--lead">
+          <span class="ledger__label">Balance</span>
+          <span class="ledger__value figure" [class.is-negative]="s.balance < 0">{{ s.balance | money }}</span>
+          <span class="ledger__note">Income minus expenses</span>
+        </div>
+        <div class="ledger__item">
+          <span class="ledger__label">Income</span>
+          <span class="ledger__value figure ledger__value--income">{{ s.income | money }}</span>
+        </div>
+        <div class="ledger__item">
+          <span class="ledger__label">Expenses</span>
+          <span class="ledger__value figure">{{ s.expenses | money }}</span>
+        </div>
+        <div class="ledger__item">
+          <span class="ledger__label">Savings rate</span>
+          <span class="ledger__value figure" [class.is-negative]="s.savingsRate < 0">{{ s.savingsRate }}%</span>
+          @if (!hasIncome()) {
+            <span class="ledger__note">No income recorded</span>
+          }
+        </div>
+      </section>
+    }
+
+    <div class="grid grid--wide-left">
+      <section class="panel" aria-labelledby="category-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="category-title">Spending by category</h2>
+          <a class="panel__link" routerLink="/analytics">Analytics</a>
+        </div>
+        <div class="panel__body">
+          @if (categories().length) {
+            <div class="category-split">
+              <bf-chart [config]="categoryChart()" [label]="'Spending by category, ' + monthLabel()" [height]="210" />
+              <ul class="legend">
+                @for (item of categories(); track item.categoryId) {
+                  <li>
+                    <span class="legend__swatch" [style.background]="item.color" aria-hidden="true"></span>
+                    <span class="legend__name">{{ item.name }}</span>
+                    <span class="legend__value figure">{{ item.total | money }}</span>
+                    <span class="legend__share figure">{{ item.percentage }}%</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          } @else {
+            <bf-state-message [title]="'No spending recorded in ' + monthLabel() + '.'" />
+          }
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="insights-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="insights-title">Insights</h2>
+        </div>
+        <div class="panel__body">
+          @if (alerts().length || insights().length) {
+            <ul class="notice-list">
+              @for (alert of alerts(); track alert.budgetId) {
+                @if (alert.tone === 'warn') {
+                  <li class="notice" data-tone="warn">
+                    <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                    <span>{{ alert.message }}</span>
+                  </li>
+                }
+              }
+              @for (insight of insights(); track $index) {
+                <li class="notice" [attr.data-tone]="insight.tone === 'warn' ? 'danger' : 'ok'">
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ insight.icon }}</span>
+                  <span>{{ insight.message }}</span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <bf-state-message title="Nothing to flag." message="Insights appear once there is enough activity to compare." />
+          }
+        </div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="panel" aria-labelledby="trend-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="trend-title">Monthly spending</h2>
+        </div>
+        <div class="panel__body">
+          @if (hasTrend()) {
+            <bf-chart [config]="trendChart()" label="Expenses over the last six months" [height]="230" />
+          } @else {
+            <bf-state-message title="No activity in the last six months." />
+          }
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="income-expense-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="income-expense-title">Income vs expenses</h2>
+        </div>
+        <div class="panel__body">
+          @if (hasTrend()) {
+            <bf-chart [config]="incomeExpenseChart()" label="Income and expenses per month for the last six months" [height]="230" />
+          } @else {
+            <bf-state-message title="No activity in the last six months." />
+          }
+        </div>
+      </section>
+    </div>
+
+    <div class="grid grid--wide-right">
+      <section class="panel" aria-labelledby="budgets-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="budgets-title">Budgets</h2>
+          <a class="panel__link" routerLink="/budgets">Manage</a>
+        </div>
+        <div class="panel__body">
+          @if (budgets().length) {
+            <ul class="budget-list">
+              @for (budget of budgets(); track budget.id) {
+                <li>
+                  <div class="budget-list__row">
+                    <span class="budget-list__name">{{ budget.category.name }}</span>
+                    <span class="budget-list__figures figure">
+                      {{ budget.spent | money }}
+                      @if (budget.status !== 'NO_LIMIT') {
+                        <span class="muted">/ {{ budget.limit | money }}</span>
+                      }
+                    </span>
+                  </div>
+                  <bf-budget-meter
+                    [percentageUsed]="budget.percentageUsed"
+                    [status]="budget.status"
+                    [label]="budget.category.name + ' budget'"
+                  />
+                </li>
+              }
+            </ul>
+          } @else {
+            <bf-state-message [title]="'No budgets set for ' + monthLabel() + '.'" />
+          }
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="recent-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="recent-title">Recent transactions</h2>
+          <a class="panel__link" routerLink="/transactions">View all</a>
+        </div>
+        @if (recent().length) {
+          <bf-transaction-table [transactions]="recent()" caption="Most recent transactions" [compact]="true" />
+        } @else {
+          <bf-state-message title="No transactions yet." message="Add your first transaction to get started." />
+        }
+      </section>
+    </div>
+  </div>
+}
