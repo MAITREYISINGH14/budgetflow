@@ -1,0 +1,50 @@
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.state__icon {
+  font-size: 2rem;
+  color: var(--text-subtle);
+}
+
+.state[data-kind='error'] .state__icon {
+  color: var(--danger);
+}
+
+.state__title {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.state__message {
+  margin: 0 0 0.5rem;
+  max-width: 42ch;
+}
+
+.spinner {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 3px solid var(--border);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

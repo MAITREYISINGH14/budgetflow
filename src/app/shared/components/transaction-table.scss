@@ -1,0 +1,163 @@
+:host {
+  display: block;
+}
+
+.txn-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+th {
+  padding: 0.625rem 1rem;
+  text-align: left;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.num {
+  text-align: right;
+}
+
+.cell-date {
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.cell-desc {
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-amount {
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+tr[data-type='INCOME'] .cell-amount {
+  color: var(--income);
+}
+
+tr[data-type='EXPENSE'] .cell-amount {
+  color: var(--text);
+}
+
+.type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+
+  .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}
+
+tr[data-type='INCOME'] .type-tag {
+  color: var(--income);
+}
+
+.cell-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.muted {
+  color: var(--text-subtle);
+}
+
+.txn-table--compact {
+  td,
+  th {
+    padding-inline: 0.75rem;
+  }
+
+  .cell-type {
+    display: none;
+  }
+
+  th:nth-child(4) {
+    display: none;
+  }
+}
+
+/* Row-as-card layout for small screens */
+@media (max-width: 720px) {
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      'desc amount'
+      'category actions'
+      'date actions';
+    gap: 0.125rem 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  td {
+    padding: 0;
+    border: none;
+  }
+
+  .cell-desc {
+    grid-area: desc;
+    max-width: none;
+    font-weight: 500;
+  }
+
+  .cell-amount {
+    grid-area: amount;
+  }
+
+  .cell-category {
+    grid-area: category;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .cell-date {
+    grid-area: date;
+    font-size: 0.8125rem;
+  }
+
+  .cell-type {
+    display: none;
+  }
+
+  .cell-actions {
+    grid-area: actions;
+    align-self: end;
+    width: auto;
+  }
+}

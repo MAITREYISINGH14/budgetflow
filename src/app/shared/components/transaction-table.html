@@ -1,0 +1,61 @@
+<table class="txn-table" [class.txn-table--compact]="compact()">
+  <caption class="sr-only">{{ caption() }}</caption>
+  <thead>
+    <tr>
+      <th scope="col">Date</th>
+      <th scope="col">Description</th>
+      <th scope="col">Category</th>
+      <th scope="col">Type</th>
+      <th scope="col" class="num">Amount</th>
+      @if (!compact()) {
+        <th scope="col"><span class="sr-only">Actions</span></th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (txn of transactions(); track txn.id) {
+      <tr [attr.data-type]="txn.type">
+        <td class="cell-date" data-label="Date">{{ txn.date | displayDate }}</td>
+        <td class="cell-desc" data-label="Description">
+          @if (txn.description) {
+            {{ txn.description }}
+          } @else {
+            <span class="muted">No description</span>
+          }
+        </td>
+        <td class="cell-category" data-label="Category">{{ txn.category.name }}</td>
+        <td class="cell-type" data-label="Type">
+          <span class="type-tag">
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ txn.type === 'INCOME' ? 'south_west' : 'north_east' }}
+            </span>
+            {{ txn.type === 'INCOME' ? 'Income' : 'Expense' }}
+          </span>
+        </td>
+        <td class="cell-amount num" data-label="Amount">
+          {{ txn.type === 'INCOME' ? '+' : '−' }}{{ txn.amount | money }}
+        </td>
+        @if (!compact()) {
+          <td class="cell-actions">
+            <button
+              type="button"
+              class="icon-btn"
+              (click)="edit.emit(txn)"
+              [attr.aria-label]="'Edit ' + (txn.description || txn.category.name) + ' on ' + (txn.date | displayDate)"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            </button>
+            <button
+              type="button"
+              class="icon-btn icon-btn--danger"
+              (click)="remove.emit(txn)"
+              [attr.aria-label]="'Delete ' + (txn.description || txn.category.name) + ' on ' + (txn.date | displayDate)"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+            </button>
+          </td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>
