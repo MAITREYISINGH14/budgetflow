@@ -1,0 +1,190 @@
+<div class="page-toolbar">
+  <p class="page-toolbar__lead">
+    @if (store.status() === 'ready') {
+      {{ page().total }} {{ page().total === 1 ? 'transaction' : 'transactions' }}
+      {{ activeFilterCount() ? 'match your filters' : 'recorded' }}
+    }
+  </p>
+  <div class="page-toolbar__actions">
+    <button type="button" class="btn btn--secondary" (click)="exportCsv()" [disabled]="page().total === 0">
+      <span class="material-symbols-outlined" aria-hidden="true">download</span>
+      Export CSV
+    </button>
+    <button type="button" class="btn" (click)="openForm()" [disabled]="store.status() !== 'ready'">
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      Add transaction
+    </button>
+  </div>
+</div>
+
+<section class="panel filters" aria-labelledby="filters-title" [formGroup]="filterForm">
+  <h2 id="filters-title" class="sr-only">Filters</h2>
+
+  <div class="filters__top">
+    <div class="field filters__search">
+      <label class="sr-only" for="filter-search">Search transactions</label>
+      <span class="material-symbols-outlined filters__search-icon" aria-hidden="true">search</span>
+      <input
+        id="filter-search"
+        class="input"
+        type="search"
+        formControlName="search"
+        placeholder="Search description or category"
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="field filters__sort">
+      <label class="sr-only" for="filter-sort">Sort by</label>
+      <select id="filter-sort" class="select" formControlName="sort">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="highest">Highest amount</option>
+        <option value="lowest">Lowest amount</option>
+      </select>
+    </div>
+
+    <button
+      type="button"
+      class="btn btn--secondary filters__toggle"
+      (click)="filtersOpen.set(!filtersOpen())"
+      [attr.aria-expanded]="filtersOpen()"
+      aria-controls="filter-fields"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
+      Filters @if (activeFilterCount()) { ({{ activeFilterCount() }}) }
+    </button>
+  </div>
+
+  <div id="filter-fields" class="filters__grid" [class.is-open]="filtersOpen()">
+    <div class="field">
+      <label class="field__label" for="filter-type">Type</label>
+      <select id="filter-type" class="select" formControlName="type">
+        <option [ngValue]="null">All types</option>
+        <option value="EXPENSE">Expense</option>
+        <option value="INCOME">Income</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="filter-category">Category</label>
+      <select id="filter-category" class="select" formControlName="categoryId">
+        <option [ngValue]="null">All categories</option>
+        @for (category of categoryOptions(); track category.id) {
+          <option [ngValue]="category.id">
+            {{ category.name }}{{ formValue().type ? '' : category.type === 'INCOME' ? ' (income)' : ' (expense)' }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="filter-range">Date</label>
+      <select id="filter-range" class="select" formControlName="range">
+        <option value="all">All time</option>
+        <option value="this-month">This month</option>
+        <option value="last-month">Last month</option>
+        <option value="last-3-months">Last 3 months</option>
+        <option value="last-6-months">Last 6 months</option>
+        <option value="custom">Custom range</option>
+      </select>
+    </div>
+
+    @if (isCustomRange()) {
+      <div class="field">
+        <label class="field__label" for="filter-from">From</label>
+        <input id="filter-from" class="input" type="date" formControlName="from" [max]="today" />
+      </div>
+      <div class="field">
+        <label class="field__label" for="filter-to">To</label>
+        <input id="filter-to" class="input" type="date" formControlName="to" [max]="today" />
+      </div>
+    }
+
+    <div class="field">
+      <label class="field__label" for="filter-min">Min amount</label>
+      <input id="filter-min" class="input num" type="number" inputmode="decimal" min="0" formControlName="minAmount" />
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="filter-max">Max amount</label>
+      <input id="filter-max" class="input num" type="number" inputmode="decimal" min="0" formControlName="maxAmount" />
+    </div>
+
+    <div class="filters__clear">
+      <button type="button" class="btn btn--ghost" (click)="clearFilters()" [disabled]="activeFilterCount() === 0">
+        Clear filters
+      </button>
+    </div>
+  </div>
+
+  @if (filterProblem(); as problem) {
+    <p class="field__error filters__problem" role="alert">{{ problem }}</p>
+  }
+</section>
+
+<section class="panel results" aria-labelledby="results-title" [attr.aria-busy]="store.status() === 'loading'">
+  <h2 id="results-title" class="sr-only">Results</h2>
+
+  @if (store.status() === 'error') {
+    <bf-state-message
+      kind="error"
+      title="Unable to load transactions."
+      [message]="store.error()"
+      actionLabel="Try again"
+      (action)="store.load(true)"
+    />
+  } @else if (store.status() !== 'ready') {
+    <bf-state-message kind="loading" title="Loading transactions…" />
+  } @else if (page().total === 0 && activeFilterCount() > 0) {
+    <bf-state-message
+      title="No transactions match these filters."
+      message="Try a wider date range or remove a filter."
+      actionLabel="Clear filters"
+      (action)="clearFilters()"
+    />
+  } @else if (page().total === 0) {
+    <bf-state-message
+      title="No transactions found."
+      message="Add your first transaction to start tracking."
+      actionLabel="Add transaction"
+      (action)="openForm()"
+    />
+  } @else {
+    <div class="results__table">
+      <bf-transaction-table
+        [transactions]="page().data"
+        caption="Transactions matching the current filters"
+        (edit)="openForm($event)"
+        (remove)="confirmDelete($event)"
+      />
+    </div>
+
+    @if (page().totalPages > 1) {
+      <nav class="pager" aria-label="Pagination">
+        <span class="pager__info">{{ showingLabel() }}</span>
+        <div class="pager__buttons">
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="goToPage(page().page - 1)"
+            [disabled]="page().page <= 1"
+            aria-label="Previous page"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+          <span class="pager__page" aria-current="page">Page {{ page().page }} of {{ page().totalPages }}</span>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="goToPage(page().page + 1)"
+            [disabled]="page().page >= page().totalPages"
+            aria-label="Next page"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </nav>
+    }
+  }
+</section>
