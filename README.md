@@ -4,7 +4,7 @@ A personal finance and budget manager built with Angular 21.
 
 You can record income and expenses, set monthly budgets for each category, and see where your money goes on a dashboard with charts and simple insights.
 
-**Live demo:** 
+**Live demo:** https://budgetflow-maitreyi.vercel.app/dashboard
 
 ## What it does
 
