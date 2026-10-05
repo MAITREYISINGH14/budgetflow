@@ -1,0 +1,111 @@
+.alerts {
+  margin-bottom: 1rem;
+}
+
+.overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.overview__item {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.875rem 1.25rem;
+
+  & + & {
+    border-left: 1px solid var(--border);
+  }
+}
+
+.overview__label {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.overview__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+
+  &.is-over {
+    color: var(--danger);
+  }
+}
+
+.budget-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.budget-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem 0.75rem;
+}
+
+.budget-card[data-status='EXCEEDED'] {
+  border-color: #e3b6aa;
+}
+
+.budget-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.budget-card__name {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.budget-card__figures {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  margin: 0;
+}
+
+.budget-card__spent {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.budget-card__limit {
+  color: var(--text-muted);
+}
+
+.budget-card__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+
+  .is-over {
+    color: var(--danger);
+    font-weight: 600;
+  }
+}
+
+.budget-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin: 0 -0.5rem 0 0;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+@media (max-width: 600px) {
+  .overview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .overview__item + .overview__item {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+}

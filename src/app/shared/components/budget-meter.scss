@@ -1,0 +1,46 @@
+:host {
+  display: block;
+}
+
+.meter {
+  position: relative;
+  height: 0.625rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  overflow: hidden;
+}
+
+.meter__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ok);
+  transition: width 400ms ease;
+}
+
+.meter[data-tone='warn'] .meter__fill {
+  background: var(--warn);
+}
+
+.meter[data-tone='danger'] .meter__fill {
+  background: var(--danger);
+}
+
+.meter[data-tone='neutral'] .meter__fill {
+  background: var(--text-subtle);
+}
+
+.meter__tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 75%;
+  width: 2px;
+  background: var(--surface);
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter__fill {
+    transition: none;
+  }
+}

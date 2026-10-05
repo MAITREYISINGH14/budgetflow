@@ -1,0 +1,124 @@
+<div class="page-toolbar">
+  <div class="month-switcher" role="group" aria-label="Budget month">
+    <button type="button" class="icon-btn" (click)="changeMonth(-1)" aria-label="Previous month">
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+    </button>
+    <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
+    <button type="button" class="icon-btn" (click)="changeMonth(1)" [disabled]="!canGoForward()" aria-label="Next month">
+      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+    </button>
+  </div>
+
+  <div class="page-toolbar__actions">
+    <button
+      type="button"
+      class="btn"
+      (click)="openForm()"
+      [disabled]="store.status() !== 'ready' || availableCategories().length === 0"
+      [attr.title]="availableCategories().length === 0 ? 'Every expense category already has a budget this month' : null"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">add</span>
+      Add budget
+    </button>
+  </div>
+</div>
+
+@if (store.status() === 'error') {
+  <div class="panel">
+    <bf-state-message
+      kind="error"
+      title="Unable to load budgets."
+      [message]="store.error()"
+      actionLabel="Try again"
+      (action)="store.load(true)"
+    />
+  </div>
+} @else if (store.status() !== 'ready') {
+  <div class="panel">
+    <bf-state-message kind="loading" title="Loading budgets…" />
+  </div>
+} @else if (budgets().length === 0) {
+  <div class="panel">
+    <bf-state-message
+      [title]="'No budgets for ' + monthLabel() + '.'"
+      message="Set a monthly limit for a category to see how your spending compares."
+      actionLabel="Add budget"
+      (action)="openForm()"
+    />
+  </div>
+} @else {
+  @if (alerts().length) {
+    <section class="alerts" aria-labelledby="alerts-title">
+      <h2 id="alerts-title" class="sr-only">Budget alerts</h2>
+      <ul class="notice-list">
+        @for (alert of alerts(); track alert.budgetId) {
+          <li class="notice" [attr.data-tone]="alert.tone">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ alert.tone === 'danger' ? 'error' : 'warning' }}</span>
+            <span>{{ alert.message }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <section class="panel overview" aria-label="Month totals">
+    <div class="overview__item">
+      <span class="overview__label">Budgeted</span>
+      <span class="overview__value figure">{{ totals().limit | money }}</span>
+    </div>
+    <div class="overview__item">
+      <span class="overview__label">Spent</span>
+      <span class="overview__value figure">{{ totals().spent | money }}</span>
+    </div>
+    <div class="overview__item">
+      <span class="overview__label">{{ totals().isOver ? 'Over across budgets' : 'Left to spend' }}</span>
+      <span class="overview__value figure" [class.is-over]="totals().isOver">{{ totals().leftAmount | money }}</span>
+    </div>
+  </section>
+
+  <section class="budget-grid" aria-label="Budgets">
+    @for (card of cards(); track card.budget.id) {
+      <article class="panel budget-card" [attr.data-status]="card.budget.status">
+        <header class="budget-card__head">
+          <h3 class="budget-card__name">{{ card.budget.category.name }}</h3>
+          <span class="badge" [attr.data-tone]="card.meta.tone">
+            <span class="material-symbols-outlined" aria-hidden="true">{{ card.meta.icon }}</span>
+            {{ card.meta.label }}
+          </span>
+        </header>
+
+        <p class="budget-card__figures">
+          <span class="budget-card__spent figure">{{ card.budget.spent | money }}</span>
+          <span class="budget-card__limit">
+            @if (card.budget.status === 'NO_LIMIT') { no limit } @else { of {{ card.budget.limit | money }} }
+          </span>
+        </p>
+
+        <bf-budget-meter
+          [percentageUsed]="card.budget.percentageUsed"
+          [status]="card.budget.status"
+          [label]="card.budget.category.name + ' budget'"
+        />
+
+        <div class="budget-card__foot">
+          <span>{{ card.usedText }}</span>
+          <span [class.is-over]="card.budget.remaining < 0">{{ card.remainingText }}</span>
+        </div>
+
+        <div class="budget-card__actions">
+          <button type="button" class="icon-btn" (click)="openForm(card.budget)" [attr.aria-label]="'Edit ' + card.budget.category.name + ' budget'">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+          </button>
+          <button
+            type="button"
+            class="icon-btn icon-btn--danger"
+            (click)="confirmDelete(card.budget)"
+            [attr.aria-label]="'Delete ' + card.budget.category.name + ' budget'"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+          </button>
+        </div>
+      </article>
+    }
+  </section>
+}

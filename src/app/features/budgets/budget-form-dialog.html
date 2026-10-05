@@ -1,0 +1,62 @@
+<div class="dialog">
+  <h2 class="dialog__title" id="budget-dialog-title">
+    {{ existing ? 'Edit ' + existing.category.name + ' budget' : 'Add budget' }}
+  </h2>
+  <p class="dialog__text">Monthly limit for {{ monthLabel }}.</p>
+
+  <form class="dialog__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (!existing) {
+      <div class="field">
+        <label class="field__label" for="budget-category">Category</label>
+        <select
+          id="budget-category"
+          class="select"
+          formControlName="categoryId"
+          [attr.aria-invalid]="errorFor('categoryId') ? 'true' : null"
+          [attr.aria-describedby]="errorFor('categoryId') ? 'budget-category-error' : null"
+        >
+          <option [ngValue]="null" disabled>Choose an expense category</option>
+          @for (category of data.availableCategories; track category.id) {
+            <option [ngValue]="category.id">{{ category.name }}</option>
+          }
+        </select>
+        @if (errorFor('categoryId')) {
+          <p class="field__error" id="budget-category-error">Choose a category.</p>
+        }
+      </div>
+    }
+
+    <div class="field">
+      <label class="field__label" for="budget-limit">Monthly limit</label>
+      <div class="input--prefixed">
+        <span class="input__prefix" aria-hidden="true">₹</span>
+        <input
+          id="budget-limit"
+          class="input num"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          step="1"
+          formControlName="limit"
+          [attr.aria-invalid]="errorFor('limit') ? 'true' : null"
+          [attr.aria-describedby]="errorFor('limit') ? 'budget-limit-error' : 'budget-limit-hint'"
+        />
+      </div>
+      <p class="field__hint" id="budget-limit-hint">A limit of 0 tracks spending without a cap.</p>
+      @if (errorFor('limit'); as message) {
+        <p class="field__error" id="budget-limit-error">{{ message }}</p>
+      }
+    </div>
+
+    @if (serverError(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--secondary" (click)="cancel()">Cancel</button>
+      <button type="submit" class="btn" [disabled]="saving()">
+        {{ saving() ? 'Saving…' : existing ? 'Save limit' : 'Add budget' }}
+      </button>
+    </div>
+  </form>
+</div>
