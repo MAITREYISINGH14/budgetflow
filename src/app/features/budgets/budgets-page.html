@@ -74,15 +74,15 @@
   <section class="panel overview" aria-label="Month totals">
     <div class="overview__item">
       <span class="overview__label">Budgeted</span>
-      <span class="overview__value figure">{{ totals().limit | money }}</span>
+      <bf-count-up class="overview__value figure" [value]="totals().limit" />
     </div>
     <div class="overview__item">
       <span class="overview__label">Spent</span>
-      <span class="overview__value figure">{{ totals().spent | money }}</span>
+      <bf-count-up class="overview__value figure" [value]="totals().spent" />
     </div>
     <div class="overview__item">
       <span class="overview__label">{{ totals().isOver ? 'Over across budgets' : 'Left to spend' }}</span>
-      <span class="overview__value figure" [class.is-over]="totals().isOver">{{ totals().leftAmount | money }}</span>
+      <bf-count-up class="overview__value figure" [class.is-over]="totals().isOver" [value]="totals().leftAmount" />
     </div>
   </section>
 

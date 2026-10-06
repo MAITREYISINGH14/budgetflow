@@ -1,3 +1,18 @@
+@if (store.status() === 'ready' && store.transactions().length) {
+  <section class="story" aria-label="Month summary">
+    <p class="story__greeting">{{ greeting }}</p>
+    <p class="story__headline">
+      @for (part of story(); track $index) {
+        @if (part.emphasis) {
+          <strong [attr.data-tone]="part.emphasis">{{ part.text }}</strong>
+        } @else {
+          <span>{{ part.text }}</span>
+        }
+      }
+    </p>
+  </section>
+}
+
 <div class="page-toolbar">
   <div class="month-switcher" role="group" aria-label="Dashboard month">
     <button type="button" class="icon-btn" (click)="changeMonth(-1)" aria-label="Previous month">
@@ -51,23 +66,36 @@
       <section class="ledger panel" [attr.aria-label]="'Summary for ' + monthLabel()">
         <div class="ledger__item ledger__item--lead">
           <span class="ledger__label">Balance</span>
-          <span class="ledger__value figure" [class.is-negative]="s.balance < 0">{{ s.balance | money }}</span>
+          <bf-count-up class="ledger__value figure" [class.is-negative]="s.balance < 0" [value]="s.balance" />
           <span class="ledger__note">Income minus expenses</span>
+          <bf-delta-chip class="ledger__delta" [change]="changes()?.balance ?? null" [reference]="previousLabel()" />
+          <bf-sparkline class="ledger__spark" [values]="sparks().net" />
         </div>
         <div class="ledger__item">
           <span class="ledger__label">Income</span>
-          <span class="ledger__value figure ledger__value--income">{{ s.income | money }}</span>
+          <bf-count-up class="ledger__value figure ledger__value--income" [value]="s.income" />
+          <bf-delta-chip class="ledger__delta" [change]="changes()?.income ?? null" [reference]="previousLabel()" />
+          <bf-sparkline class="ledger__spark" [values]="sparks().income" />
         </div>
         <div class="ledger__item">
           <span class="ledger__label">Expenses</span>
-          <span class="ledger__value figure">{{ s.expenses | money }}</span>
+          <bf-count-up class="ledger__value figure" [value]="s.expenses" />
+          <bf-delta-chip class="ledger__delta" [change]="changes()?.expenses ?? null" [reference]="previousLabel()" />
+          <bf-sparkline class="ledger__spark" [values]="sparks().expenses" />
         </div>
         <div class="ledger__item">
           <span class="ledger__label">Savings rate</span>
-          <span class="ledger__value figure" [class.is-negative]="s.savingsRate < 0">{{ s.savingsRate }}%</span>
+          <bf-count-up
+            class="ledger__value figure"
+            [class.is-negative]="s.savingsRate < 0"
+            [value]="s.savingsRate"
+            kind="percent"
+          />
           @if (!hasIncome()) {
             <span class="ledger__note">No income recorded</span>
           }
+          <bf-delta-chip class="ledger__delta" [change]="changes()?.savings ?? null" [reference]="previousLabel()" />
+          <bf-sparkline class="ledger__spark" [values]="sparks().savings" />
         </div>
       </section>
     }

@@ -69,23 +69,28 @@
       <section class="panel figures" aria-label="Totals for the selected period">
         <div class="figures__item">
           <span class="figures__label">Income</span>
-          <span class="figures__value figure figures__value--income">{{ s.income | money }}</span>
+          <bf-count-up class="figures__value figure figures__value--income" [value]="s.income" />
         </div>
         <div class="figures__item">
           <span class="figures__label">Expenses</span>
-          <span class="figures__value figure">{{ s.expenses | money }}</span>
+          <bf-count-up class="figures__value figure" [value]="s.expenses" />
         </div>
         <div class="figures__item">
           <span class="figures__label">Net</span>
-          <span class="figures__value figure" [class.is-negative]="s.balance < 0">{{ s.balance | money }}</span>
+          <bf-count-up class="figures__value figure" [class.is-negative]="s.balance < 0" [value]="s.balance" />
         </div>
         <div class="figures__item">
           <span class="figures__label">Savings rate</span>
-          <span class="figures__value figure" [class.is-negative]="s.savingsRate < 0">{{ s.savingsRate }}%</span>
+          <bf-count-up
+            class="figures__value figure"
+            [class.is-negative]="s.savingsRate < 0"
+            [value]="s.savingsRate"
+            kind="percent"
+          />
         </div>
         <div class="figures__item">
           <span class="figures__label">Average monthly spend</span>
-          <span class="figures__value figure">{{ averageMonthlySpend() | money }}</span>
+          <bf-count-up class="figures__value figure" [value]="averageMonthlySpend()" />
         </div>
       </section>
     }

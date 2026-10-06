@@ -8,13 +8,14 @@ import { ChartComponent } from '../../shared/charts/chart';
 import { categoryBars, colorForIndex, incomeExpenseBars, spendingTrendLine } from '../../shared/charts/chart-configs';
 import { StateMessage } from '../../shared/components/state-message';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { CountUp } from '../../shared/components/count-up';
 
 type RangeOption = '1' | '3' | '6' | '12' | 'custom';
 
 @Component({
   selector: 'bf-analytics-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ChartComponent, StateMessage, MoneyPipe],
+  imports: [ChartComponent, StateMessage, MoneyPipe, CountUp],
   templateUrl: './analytics-page.html',
   styleUrl: './analytics-page.scss',
 })

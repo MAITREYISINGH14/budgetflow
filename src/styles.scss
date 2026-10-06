@@ -976,3 +976,51 @@ fieldset.field {
     animation: bf-sheet-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 }
+
+@keyframes bf-aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-6%, 5%, 0) scale(1.08);
+  }
+
+  100% {
+    transform: translate3d(5%, -4%, 0) scale(0.95);
+  }
+}
+
+:root[data-theme='dark'] body::before,
+:root[data-theme='dark'] body::after {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+:root[data-theme='dark'] body::before {
+  top: -32vmax;
+  right: -22vmax;
+  background: radial-gradient(circle, rgb(143 168 255 / 26%) 0%, rgb(143 168 255 / 8%) 40%, transparent 68%);
+}
+
+:root[data-theme='dark'] body::after {
+  bottom: -38vmax;
+  left: -8vmax;
+  background: radial-gradient(circle, rgb(79 209 161 / 16%) 0%, rgb(196 155 255 / 10%) 38%, transparent 66%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-theme='dark'] body::before {
+    animation: bf-aurora-drift 28s ease-in-out infinite alternate;
+  }
+
+  :root[data-theme='dark'] body::after {
+    animation: bf-aurora-drift 36s ease-in-out infinite alternate-reverse;
+  }
+}

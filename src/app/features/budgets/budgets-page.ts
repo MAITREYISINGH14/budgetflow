@@ -24,6 +24,7 @@ import { confirmAction } from '../../shared/components/confirm-dialog';
 import { StateMessage } from '../../shared/components/state-message';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { BudgetDialogData, BudgetFormDialog } from './budget-form-dialog';
+import { CountUp } from '../../shared/components/count-up';
 
 /** Furthest month ahead that budgets can be planned for. */
 const PLANNING_HORIZON_MONTHS = 12;
@@ -31,7 +32,7 @@ const PLANNING_HORIZON_MONTHS = 12;
 @Component({
   selector: 'bf-budgets-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [BudgetMeter, StateMessage, MoneyPipe],
+  imports: [BudgetMeter, StateMessage, MoneyPipe, CountUp],
   templateUrl: './budgets-page.html',
   styleUrl: './budgets-page.scss',
 })

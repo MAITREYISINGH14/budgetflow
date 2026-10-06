@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { inRange, monthlyTrend, spendingByCategory, summarize } from '../../core/finance/aggregations';
 import { insightsForMonth } from '../../core/finance/insights';
+import { greetingFor, percentChange, pointChange } from '../../core/finance/month-comparison';
 import { Transaction, YearMonth } from '../../core/models';
 import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -26,6 +27,9 @@ import {
   spendingTrendLine,
 } from '../../shared/charts/chart-configs';
 import { BudgetMeter } from '../../shared/components/budget-meter';
+import { CountUp } from '../../shared/components/count-up';
+import { DeltaChip } from '../../shared/components/delta-chip';
+import { Sparkline } from '../../shared/components/sparkline';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
@@ -33,6 +37,12 @@ import { TransactionDialogData, TransactionFormDialog } from '../transactions/tr
 
 const TREND_MONTHS = 6;
 const RECENT_COUNT = 8;
+
+/** One piece of the dashboard's headline sentence; emphasised parts are the numbers. */
+interface StoryPart {
+  text: string;
+  emphasis?: 'value' | 'over';
+}
 
 /**
  * Everything here is computed() from the store's two lists. A computed only re-runs when
@@ -42,7 +52,17 @@ const RECENT_COUNT = 8;
 @Component({
   selector: 'bf-dashboard-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ChartComponent, BudgetMeter, StateMessage, TransactionTable, MoneyPipe],
+  imports: [
+    RouterLink,
+    ChartComponent,
+    BudgetMeter,
+    CountUp,
+    DeltaChip,
+    Sparkline,
+    StateMessage,
+    TransactionTable,
+    MoneyPipe,
+  ],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
@@ -63,6 +83,81 @@ export class DashboardPage {
   protected readonly summary = computed(() => summarize(this.monthTransactions()));
   protected readonly hasIncome = computed(() => this.summary().income > 0);
 
+  // ---------- Story header ----------
+
+  protected readonly greeting = greetingFor(new Date().getHours());
+  protected readonly periodWording = computed(() => (this.isCurrentMonth() ? 'this month' : `in ${this.monthLabel()}`));
+
+  /** Share of income spent, as a whole percentage; null when there was no income. */
+  protected readonly spentShare = computed(() => {
+    const { income, expenses } = this.summary();
+    return income > 0 ? Math.round((expenses / income) * 100) : null;
+  });
+
+  /** Total left (positive) or over (negative) across budgets that have a limit; null with no budgets. */
+  protected readonly budgetHeadroom = computed(() => {
+    const limited = this.monthBudgets().filter((b) => b.status !== 'NO_LIMIT');
+    return limited.length ? limited.reduce((sum, b) => sum + b.remaining, 0) : null;
+  });
+
+  /**
+   * The headline sentence as parts, so numbers can be highlighted and spacing stays exact:
+   * "You’ve spent 30% of your income this month, and ₹4,353 is left across your budgets."
+   */
+  protected readonly story = computed(() => {
+    const parts: StoryPart[] = [{ text: 'You’ve spent ' }];
+    const share = this.spentShare();
+    if (share !== null) {
+      parts.push({ text: `${share}%`, emphasis: 'value' }, { text: ` of your income ${this.periodWording()}` });
+    } else {
+      parts.push(
+        { text: this.format(this.summary().expenses), emphasis: 'value' },
+        { text: ` ${this.periodWording()}` },
+      );
+    }
+
+    const headroom = this.budgetHeadroom();
+    if (headroom === null) {
+      parts.push({ text: '.' });
+    } else if (headroom > 0) {
+      parts.push(
+        { text: ', and ' },
+        { text: this.format(headroom), emphasis: 'value' },
+        { text: ' is left across your budgets.' },
+      );
+    } else if (headroom === 0) {
+      parts.push({ text: ', and your budgets are fully used.' });
+    } else {
+      parts.push(
+        { text: ', and you’re ' },
+        { text: this.format(-headroom), emphasis: 'over' },
+        { text: ' over budget overall.' },
+      );
+    }
+    return parts;
+  });
+
+  // ---------- Month-over-month changes ----------
+
+  private readonly previousPeriod = computed(() => shiftYearMonth(this.period(), -1));
+  protected readonly previousLabel = computed(() => formatMonth(toIsoMonth(this.previousPeriod()), 'short'));
+  private readonly previousSummary = computed(() =>
+    summarize(inRange(this.store.transactions(), monthBounds(this.previousPeriod()))),
+  );
+
+  /** null when the previous month has no transactions, so no misleading "vs" chips appear. */
+  protected readonly changes = computed(() => {
+    const now = this.summary();
+    const before = this.previousSummary();
+    if (before.transactionCount === 0) return null;
+    return {
+      balance: percentChange(now.balance, before.balance),
+      income: percentChange(now.income, before.income),
+      expenses: percentChange(now.expenses, before.expenses),
+      savings: before.income > 0 && now.income > 0 ? pointChange(now.savingsRate, before.savingsRate) : null,
+    };
+  });
+
   private readonly spending = computed(() => spendingByCategory(this.monthTransactions()));
   protected readonly categories = computed(() =>
     this.spending().map((item, index) => ({ ...item, color: colorForIndex(index) })),
@@ -78,6 +173,17 @@ export class DashboardPage {
     return monthlyTrend(this.store.transactions(), range);
   });
   protected readonly hasTrend = computed(() => this.trend().some((p) => p.income > 0 || p.expenses > 0));
+
+  // Sparklines: the last six months for each tile.
+  protected readonly sparks = computed(() => {
+    const points = this.trend();
+    return {
+      net: points.map((p) => p.net),
+      income: points.map((p) => p.income),
+      expenses: points.map((p) => p.expenses),
+      savings: points.map((p) => (p.income > 0 ? (p.net / p.income) * 100 : 0)),
+    };
+  });
   protected readonly trendChart = computed(() => spendingTrendLine(this.trend(), this.format));
   protected readonly incomeExpenseChart = computed(() => incomeExpenseBars(this.trend(), this.format));
 
