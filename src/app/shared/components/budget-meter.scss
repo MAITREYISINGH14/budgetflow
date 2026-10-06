@@ -4,7 +4,7 @@
 
 .meter {
   position: relative;
-  height: 0.625rem;
+  height: 0.5rem;
   border-radius: 999px;
   background: var(--surface-sunken);
   overflow: hidden;
@@ -14,7 +14,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--ok);
-  transition: width 400ms ease;
+  transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .meter[data-tone='warn'] .meter__fill {
@@ -29,6 +29,7 @@
   background: var(--text-subtle);
 }
 
+// Marks the 75% "near limit" line.
 .meter__tick {
   position: absolute;
   top: 0;
@@ -36,7 +37,6 @@
   left: 75%;
   width: 2px;
   background: var(--surface);
-  opacity: 0.9;
 }
 
 @media (prefers-reduced-motion: reduce) {

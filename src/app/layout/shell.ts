@@ -3,6 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { isApiConfigured } from '../core/config';
+import { SettingsService } from '../core/services/settings.service';
 import { FinanceStore } from '../core/state/finance-store';
 import { ToastHost } from '../shared/components/toast-host';
 
@@ -23,6 +24,7 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly store = inject(FinanceStore);
+  protected readonly settings = inject(SettingsService);
 
   /** Until a MockAPI URL is set in core/config.ts, the app shows setup steps instead of pages. */
   protected readonly configured = isApiConfigured();
@@ -46,6 +48,10 @@ export class Shell {
   constructor() {
     // Load transactions and budgets once for the whole app; pages read them from the store.
     if (this.configured) this.store.load();
+  }
+
+  protected toggleTheme(): void {
+    this.settings.toggleTheme();
   }
 
   private deepestHeading(): string {

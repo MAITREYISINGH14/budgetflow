@@ -1,6 +1,6 @@
 .filters {
-  padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1.125rem 1.375rem;
 }
 
 .filters__top {
@@ -13,20 +13,21 @@
   flex: 1;
 
   .input {
-    padding-left: 2.25rem;
+    padding-left: 2.625rem;
   }
 }
 
 .filters__search-icon {
   position: absolute;
-  left: 0.625rem;
+  left: 0.875rem;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-subtle);
+  pointer-events: none;
 }
 
 .filters__sort {
-  width: 12rem;
+  width: 13rem;
 }
 
 .filters__toggle {
@@ -35,9 +36,11 @@
 
 .filters__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
-  gap: 0.75rem;
-  margin-top: 0.875rem;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.875rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
 }
 
 .filters__clear {
@@ -46,7 +49,7 @@
 }
 
 .filters__problem {
-  margin-top: 0.75rem;
+  margin-top: 0.875rem;
 }
 
 .results {
@@ -62,9 +65,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.625rem 1rem;
-  border-top: 1px solid var(--border);
-  font-size: 0.875rem;
+  padding: 0.75rem 1.375rem;
+  border-top: 1px solid var(--border-soft);
+  font-size: 0.8125rem;
   color: var(--text-muted);
 }
 
@@ -77,12 +80,13 @@
 .pager__page {
   min-width: 7rem;
   text-align: center;
+  font-weight: 700;
   color: var(--text);
 }
 
 @media (max-width: 720px) {
   .filters {
-    padding: 0.75rem;
+    padding: 0.875rem;
   }
 
   .filters__top {

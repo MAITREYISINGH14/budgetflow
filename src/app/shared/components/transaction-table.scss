@@ -5,21 +5,21 @@
 .txn-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
 }
 
 th {
-  padding: 0.625rem 1rem;
+  padding: 0.75rem 1.375rem;
   text-align: left;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
+  color: var(--text-subtle);
+  border-bottom: 1px solid var(--border-soft);
   white-space: nowrap;
 }
 
 td {
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.375rem;
   border-bottom: 1px solid var(--border-soft);
   vertical-align: middle;
 }
@@ -28,8 +28,12 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
-tbody tr:hover {
-  background: var(--surface-hover);
+tbody tr {
+  transition: background-color 140ms ease;
+
+  &:hover {
+    background: var(--surface-hover);
+  }
 }
 
 .num {
@@ -46,10 +50,15 @@ tbody tr:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+}
+
+.cell-category {
+  color: var(--text-muted);
 }
 
 .cell-amount {
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -58,16 +67,12 @@ tr[data-type='INCOME'] .cell-amount {
   color: var(--income);
 }
 
-tr[data-type='EXPENSE'] .cell-amount {
-  color: var(--text);
-}
-
 .type-tag {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  color: var(--text-subtle);
 
   .material-symbols-outlined {
     font-size: 1rem;
@@ -91,19 +96,16 @@ tr[data-type='INCOME'] .type-tag {
 .txn-table--compact {
   td,
   th {
-    padding-inline: 0.75rem;
+    padding-inline: 1.125rem;
   }
 
-  .cell-type {
-    display: none;
-  }
-
+  .cell-type,
   th:nth-child(4) {
     display: none;
   }
 }
 
-/* Row-as-card layout for small screens */
+// Each row becomes a card on narrow screens, so nothing scrolls sideways.
 @media (max-width: 720px) {
   thead {
     position: absolute;
@@ -115,13 +117,13 @@ tr[data-type='INCOME'] .type-tag {
 
   tbody tr {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       'desc amount'
       'category actions'
       'date actions';
-    gap: 0.125rem 0.75rem;
-    padding: 0.75rem 1rem;
+    gap: 0.1875rem 0.75rem;
+    padding: 0.875rem 1rem;
     border-bottom: 1px solid var(--border-soft);
   }
 
@@ -133,7 +135,6 @@ tr[data-type='INCOME'] .type-tag {
   .cell-desc {
     grid-area: desc;
     max-width: none;
-    font-weight: 500;
   }
 
   .cell-amount {
@@ -143,7 +144,6 @@ tr[data-type='INCOME'] .type-tag {
   .cell-category {
     grid-area: category;
     font-size: 0.8125rem;
-    color: var(--text-muted);
   }
 
   .cell-date {

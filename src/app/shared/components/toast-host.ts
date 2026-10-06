@@ -34,15 +34,18 @@ import { ToastService } from '../../core/services/toast.service';
       display: flex;
       align-items: center;
       gap: 0.625rem;
-      padding: 0.625rem 0.5rem 0.625rem 0.875rem;
-      border-radius: 8px;
-      background: var(--ink);
-      color: #fff;
-      box-shadow: 0 6px 20px rgba(16, 32, 48, 0.18);
+      padding: 0.75rem 0.5rem 0.75rem 1rem;
+      border-radius: 12px;
+      background: var(--toast-bg);
+      color: var(--toast-text);
+      font-size: 0.875rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-3);
     }
 
     .toast[data-tone='error'] {
       background: var(--danger);
+      color: var(--on-danger);
     }
 
     .toast__text {
@@ -50,6 +53,11 @@ import { ToastService } from '../../core/services/toast.service';
     }
 
     .toast .icon-btn {
+      color: inherit;
+    }
+
+    .toast .icon-btn:hover {
+      background: rgb(127 127 127 / 20%);
       color: inherit;
     }
 
