@@ -1,4 +1,4 @@
-import { greetingFor, percentChange, pointChange } from './month-comparison';
+import { greetingFor, percentChange } from './month-comparison';
 
 describe('percentChange', () => {
   it('reports an increase as a rounded percentage', () => {
@@ -19,13 +19,6 @@ describe('percentChange', () => {
 
   it('keeps the direction right when the previous value was negative', () => {
     expect(percentChange(500, -1000)?.direction).toBe('up');
-  });
-});
-
-describe('pointChange', () => {
-  it('reports the difference in percentage points', () => {
-    expect(pointChange(69.8, 65.6)).toEqual({ direction: 'up', text: '4.2 pts' });
-    expect(pointChange(50, 57.5)).toEqual({ direction: 'down', text: '7.5 pts' });
   });
 });
 

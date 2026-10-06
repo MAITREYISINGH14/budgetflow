@@ -7,7 +7,7 @@ export interface InsightView {
 }
 
 /**
- * The backend decides *which* insights apply; this only words them.
+ * core/finance/insights.ts decides *which* insights apply; this only words them.
  * `period` lets the dashboard say "this month" or "in August".
  */
 export function describeInsight(

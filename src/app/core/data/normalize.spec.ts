@@ -26,6 +26,8 @@ describe('toTransaction', () => {
   });
 
   it.each([
+    ['a missing id', { id: undefined }],
+    ['an empty id', { id: '  ' }],
     ['an unknown type', { type: 'TRANSFER' }],
     ['a category of the other type', { categoryId: 'salary' }],
     ['an unknown category', { categoryId: 'rent' }],

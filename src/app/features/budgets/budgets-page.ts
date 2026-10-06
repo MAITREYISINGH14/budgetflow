@@ -21,10 +21,10 @@ import {
 import { sumAmounts } from '../../core/utils/money';
 import { BudgetMeter } from '../../shared/components/budget-meter';
 import { confirmAction } from '../../shared/components/confirm-dialog';
+import { CountUp } from '../../shared/components/count-up';
 import { StateMessage } from '../../shared/components/state-message';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { BudgetDialogData, BudgetFormDialog } from './budget-form-dialog';
-import { CountUp } from '../../shared/components/count-up';
 
 /** Furthest month ahead that budgets can be planned for. */
 const PLANNING_HORIZON_MONTHS = 12;

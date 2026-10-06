@@ -26,18 +26,13 @@
   --text-subtle: #6a7389;
 
   --primary: #0b74c4;
-  --primary-hover: #0961a5;
   --on-primary: #ffffff;
   --primary-soft: #e6f2fb;
-  --primary-gradient: var(--accent-gradient);
 
   --hero-gradient:
     radial-gradient(60% 90% at 88% 0%, rgb(255 255 255 / 45%) 0%, transparent 60%), var(--accent-gradient);
-  --hero-bg: #7cc8ff;
-  --hero-border: transparent;
   --hero-text: var(--accent-ink);
   --hero-label: var(--accent-ink-muted);
-  --hero-accent: var(--accent-ink);
 
   --page-glow:
     radial-gradient(46rem 28rem at 94% -8%, rgb(124 200 255 / 20%), transparent 70%),
@@ -86,7 +81,6 @@
 
   // Softer, rounder shapes.
   --radius-sm: 12px;
-  --radius: 22px;
   --radius-lg: 28px;
 
   --shadow-1: 0 1px 2px rgb(13 18 34 / 4%);
@@ -110,7 +104,6 @@
   --text-subtle: #8a92a8;
 
   --primary: #8fd5ff;
-  --primary-hover: #aee1ff;
   --on-primary: #05202e;
   --primary-soft: rgb(143 213 255 / 13%);
 
@@ -979,5 +972,13 @@ fieldset.field {
 
   :root[data-theme='dark'] body::after {
     animation: bf-aurora-drift 36s ease-in-out infinite alternate-reverse;
+  }
+}
+
+/* Shared entrance animation: cards rise into place. Used by the page stylesheets. */
+@keyframes bf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
 }

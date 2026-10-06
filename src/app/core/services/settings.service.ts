@@ -55,7 +55,7 @@ export function parseSettings(raw: string | null): AppSettings {
       theme: value.theme === 'dark' || value.theme === 'light' ? value.theme : systemTheme(),
     };
   } catch {
-    return DEFAULT_SETTINGS;
+    return { ...DEFAULT_SETTINGS, theme: systemTheme() };
   }
 }
 
@@ -108,6 +108,7 @@ export class SettingsService {
   /**
    * Sets data-theme on <html> straight away (not in an effect), so the CSS variables
    * are already switched when charts redraw for the new theme.
+   * Keep the colours in sync with public/theme-init.js.
    */
   private applyTheme(theme: ThemeMode): void {
     const root = this.document.documentElement;

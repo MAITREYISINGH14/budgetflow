@@ -1,4 +1,4 @@
-BudgetFlow
+# BudgetFlow
 
 A personal finance and budget manager built with Angular 21.
 
@@ -15,7 +15,8 @@ You can record income and expenses, set monthly budgets for each category, and s
 - **Analytics:** 1, 3, 6, 12 month or custom date ranges, with top categories and income vs expenses.
 - **Insights:** rule-based messages like "Food spending increased by 24% compared with the previous month".
 - **Currency display:** amounts are recorded in rupees and can be shown in USD, EUR or GBP using live exchange rates.
-- Works on desktop and mobile, and can be used with a keyboard.
+- **Light and dark themes:** follows the device setting on first visit, remembers your choice, and applies it before the page draws, so there is no flash.
+- Works on desktop and mobile (floating navigation and bottom-sheet dialogs on phones), can be used with a keyboard, and respects the "reduce motion" setting.
 
 ## Tech stack
 
@@ -23,6 +24,9 @@ You can record income and expenses, set monthly budgets for each category, and s
 - **RxJS** for HTTP calls, debounced inputs and bulk requests
 - **Reactive Forms** with custom validators
 - **Angular CDK** for accessible dialogs
+- **Chart.js** for the doughnut, bar and line charts; the dashboard's bar chart and number animations are plain HTML, CSS and signals
+- **Vercel** hosting with security headers (Content Security Policy, HSTS, no framing) and Vercel Web Analytics
+- **ESLint** (including Angular accessibility rules), **Prettier**, **Vitest**, and **GitHub Actions** CI that lints, checks formatting, tests and builds every push
 - **Chart.js** for charts
 - **SCSS** for styling
 - **Vitest** for tests
@@ -98,7 +102,18 @@ The app is deployed on Vercel. Build it locally with:
 npm run build
 ```
 
-The output goes to `dist/budgetflow/browser`. `vercel.json` sends all routes to `index.html`, so refreshing a page like `/transactions` doesn't give a 404.
+The output goes to `dist/budgetflow`. `vercel.json` sends all routes to `index.html`, so refreshing a page like `/transactions` doesn't give a 404.
+
+## Quality checks
+
+The same checks run locally and in CI:
+
+```bash
+npm run lint          # ESLint, including accessibility rules for templates
+npm run format:check  # Prettier
+npm run test:ci       # unit and component tests, once
+npm run build         # production build with size budgets
+```
 
 ## Some decisions I made
 
@@ -106,6 +121,7 @@ The output goes to `dist/budgetflow/browser`. `vercel.json` sends all routes to 
 - **Dates as `YYYY-MM-DD` strings.** A transaction happens on a day, not at a specific time. Keeping dates as strings avoids them shifting by a day in different timezones.
 - **Categories in code.** MockAPI's free plan only allows two resources, and categories don't change, so they're a fixed list with ids like `food` and `salary`.
 - **Validation in the app.** MockAPI accepts any data, so the app checks amounts, dates and categories, allows only one budget per category per month, and ignores invalid records it gets back.
+- **One accent colour.** Each page has a single bright card (Balance, Left to spend, Net); everything else stays quiet, so the most important number is obvious. All colours are CSS variables, so the light and dark themes are two sets of the same variables.
 - **Bulk operations one at a time.** MockAPI can lose changes when several requests arrive at once, so loading or deleting demo data sends requests one by one and reloads the data afterwards.
 
 ## Limitations

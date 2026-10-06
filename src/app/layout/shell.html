@@ -34,6 +34,11 @@
   }
   @if (configured) {
     <router-outlet />
+  } @else {
+    <p class="config-missing" role="alert">
+      BudgetFlow is not connected to its data yet. Set <code>MOCKAPI_BASE_URL</code> in
+      <code>src/app/core/config.ts</code>, as described in the README.
+    </p>
   }
 </main>
 

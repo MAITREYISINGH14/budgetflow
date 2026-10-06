@@ -1,3 +1,5 @@
+// Applies the saved light/dark theme before Angular starts, so the page never flashes the wrong one.
+// Keep the colours in sync with applyTheme() in settings.service.ts.
 (function () {
   var theme;
   try {
@@ -8,5 +10,5 @@
   }
   document.documentElement.setAttribute('data-theme', theme);
   var meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b111c' : '#f4f6fa');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0a0c12' : '#f3f4f8');
 })();

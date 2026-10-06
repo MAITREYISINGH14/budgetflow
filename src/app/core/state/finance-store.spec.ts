@@ -138,4 +138,23 @@ describe('FinanceStore', () => {
     expect((error as ApiError).status).toBe(422);
     http.expectNone(TX_URL);
   });
+
+  it('refuses new budgets once the free-plan limit is reached', () => {
+    // 100 budgets spread over 100 different months, so none is a duplicate of the new one.
+    const full = Array.from({ length: 100 }, (_, i) => ({
+      ...foodBudget,
+      id: String(i),
+      year: 2000 + Math.floor(i / 12),
+      month: (i % 12) + 1,
+    }));
+    loadWith([], full);
+    let error: unknown;
+
+    store.createBudget({ categoryId: 'bills', month: 9, year: 2026, limit: 5000 }).subscribe({
+      error: (e) => (error = e),
+    });
+
+    expect((error as ApiError).status).toBe(422);
+    http.expectNone(BUDGET_URL);
+  });
 });

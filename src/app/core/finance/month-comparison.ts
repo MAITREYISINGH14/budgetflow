@@ -1,3 +1,5 @@
+/** Month-over-month changes for the dashboard. Pure functions, so they are easy to test. */
+
 export type ChangeDirection = 'up' | 'down' | 'flat';
 
 export interface MonthChange {
@@ -20,11 +22,7 @@ export function percentChange(current: number, previous: number): MonthChange | 
   return { direction: directionOf(percent), text: `${Math.abs(percent)}%` };
 }
 
-export function pointChange(current: number, previous: number): MonthChange {
-  const points = Math.round((current - previous) * 10) / 10;
-  return { direction: directionOf(points), text: `${Math.abs(points)} pts` };
-}
-
+/** "Good morning" / "Good afternoon" / "Good evening" for an hour from 0 to 23. */
 export function greetingFor(hour: number): string {
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';

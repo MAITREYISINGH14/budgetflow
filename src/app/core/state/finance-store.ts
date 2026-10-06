@@ -127,6 +127,15 @@ export class FinanceStore {
 
   /** MockAPI has no unique constraints, so "one budget per category per month" is enforced here. */
   createBudget(payload: BudgetPayload): Observable<Budget> {
+    if (this.budgetList().length >= MOCKAPI_RECORD_LIMIT) {
+      return throwError(
+        () =>
+          new ApiError(
+            422,
+            `The free MockAPI plan stores up to ${MOCKAPI_RECORD_LIMIT} budgets. Delete some to add more.`,
+          ),
+      );
+    }
     const duplicate = this.budgetList().some(
       (b) => b.categoryId === payload.categoryId && b.month === payload.month && b.year === payload.year,
     );
@@ -165,12 +174,16 @@ export class FinanceStore {
   /** Creates the demo records. Emits the number of records written so far. */
   loadDemoData(today = todayIso()): Observable<number> {
     const demo = buildDemoData(today);
-    if (this.transactionList().length + demo.transactions.length > MOCKAPI_RECORD_LIMIT) {
+    const newBudgets = this.newDemoBudgets(demo.budgets);
+    if (
+      this.transactionList().length + demo.transactions.length > MOCKAPI_RECORD_LIMIT ||
+      this.budgetList().length + newBudgets.length > MOCKAPI_RECORD_LIMIT
+    ) {
       return throwError(
         () =>
           new ApiError(
             422,
-            `Demo data adds ${demo.transactions.length} transactions, which would pass MockAPI's limit of ${MOCKAPI_RECORD_LIMIT}. Delete existing data first.`,
+            `Demo data would pass MockAPI's limit of ${MOCKAPI_RECORD_LIMIT} records per list. Delete existing data first.`,
           ),
       );
     }
@@ -179,7 +192,7 @@ export class FinanceStore {
       ...demo.transactions.map((payload) =>
         this.transactionApi.create(payload).pipe(tap((t) => this.transactionList.update((list) => [...list, t]))),
       ),
-      ...this.newDemoBudgets(demo.budgets).map((payload) =>
+      ...newBudgets.map((payload) =>
         this.budgetApi.create(payload).pipe(tap((b) => this.budgetList.update((list) => [...list, b]))),
       ),
     ];

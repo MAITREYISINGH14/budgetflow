@@ -209,17 +209,10 @@
 
 // ---------- Motion ----------
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .overview__item,
   .budget-card {
-    animation: rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    animation: bf-rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 
   .overview__item:nth-child(2) {

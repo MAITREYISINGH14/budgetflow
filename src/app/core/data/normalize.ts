@@ -4,6 +4,12 @@ import { isValidIsoDate } from '../utils/dates';
 
 type Raw = Record<string, unknown>;
 
+/** MockAPI ids are numeric strings; a row without one cannot be edited or deleted, so it is skipped. */
+function idOf(raw: Raw): string | null {
+  const id = raw['id'];
+  return (typeof id === 'string' && id.trim() !== '') || typeof id === 'number' ? String(id) : null;
+}
+
 /**
  * MockAPI stores whatever JSON it is sent and may hand back numbers as strings or
  * include its own sample fields. Everything coming in is checked here, and rows that
@@ -15,12 +21,14 @@ export function toTransaction(raw: Raw): Transaction | null {
   const categoryId = String(raw['categoryId'] ?? '');
   const date = String(raw['date'] ?? '').slice(0, 10);
   const category = findCategory(categoryId);
+  const id = idOf(raw);
 
+  if (id === null) return null;
   if ((type !== 'INCOME' && type !== 'EXPENSE') || !category || category.type !== type) return null;
   if (!Number.isFinite(amount) || amount <= 0 || !isValidIsoDate(date)) return null;
 
   return {
-    id: String(raw['id']),
+    id,
     type,
     amount: Math.round(amount * 100) / 100,
     categoryId,
@@ -36,13 +44,15 @@ export function toBudget(raw: Raw): Budget | null {
   const month = Number(raw['month']);
   const year = Number(raw['year']);
   const limit = Number(raw['limit']);
+  const id = idOf(raw);
 
+  if (id === null) return null;
   if (findCategory(categoryId)?.type !== 'EXPENSE') return null;
   if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year)) return null;
   if (!Number.isFinite(limit) || limit < 0) return null;
 
   return {
-    id: String(raw['id']),
+    id,
     categoryId,
     month,
     year,
