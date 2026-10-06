@@ -271,4 +271,25 @@
       }
     }
   }
+
+  @media (max-width: 900px) {
+    .content {
+      padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .bottom-nav a {
+      .material-symbols-outlined {
+        display: grid;
+        place-items: center;
+        width: 3.5rem;
+        height: 1.875rem;
+        border-radius: 999px;
+        transition: background-color 200ms ease;
+      }
+
+      &.is-active .material-symbols-outlined {
+        background: var(--primary-soft);
+      }
+    }
+  }
 }

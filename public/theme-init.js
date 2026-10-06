@@ -7,4 +7,6 @@
     theme = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   document.documentElement.setAttribute('data-theme', theme);
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b111c' : '#f4f6fa');
 })();

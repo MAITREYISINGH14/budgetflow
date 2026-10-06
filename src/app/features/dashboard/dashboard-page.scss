@@ -413,3 +413,66 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+// ---------- Mobile ----------
+
+@media (max-width: 600px) {
+  // Balance across the top, then Income, Expenses and Savings side by side:
+  // the whole summary fits on the first screen.
+  .ledger {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .ledger__item--lead {
+    grid-column: 1 / -1;
+    padding: 1.125rem 1.25rem;
+  }
+
+  .ledger__item:nth-child(4) {
+    grid-column: auto;
+  }
+
+  .ledger__item:not(.ledger__item--lead) {
+    padding: 0.875rem 0.75rem;
+    gap: 0.25rem;
+
+    // The corner ring crowds tiles this small.
+    &::before {
+      display: none;
+    }
+
+    .ledger__label,
+    .ledger__note {
+      font-size: 0.6875rem;
+    }
+
+    .ledger__value {
+      font-size: clamp(0.875rem, 4vw, 1.125rem);
+      letter-spacing: -0.01em;
+    }
+  }
+
+  // Donut and legend sit closer together.
+  .category-split {
+    gap: 1rem;
+    justify-items: center;
+  }
+
+  .donut {
+    width: 11.25rem;
+  }
+
+  .legend {
+    width: 100%;
+  }
+
+  // No scrolling box inside the scrolling page on phones: show every insight.
+  .grid--wide-left > .panel:last-child > .panel__body {
+    max-height: none;
+    overflow: visible;
+    padding-bottom: 1rem;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
