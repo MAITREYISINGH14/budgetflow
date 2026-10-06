@@ -97,7 +97,12 @@ export function formatMonth(isoMonth: string, style: keyof typeof monthFormatter
   return monthFormatters[style].format(new Date(`${isoMonth}-01T00:00:00Z`));
 }
 
-const displayDate = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const displayDate = new Intl.DateTimeFormat('en-IN', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
 
 /**
  * "2026-09-01" -> "01 Sep 2026". The date is read as UTC and formatted in UTC so the day

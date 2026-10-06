@@ -60,7 +60,9 @@ describe('TransactionTable', () => {
   });
 
   it('shows a placeholder for a missing description', () => {
-    expect(element.querySelectorAll('tbody tr')[1].querySelector('.cell-desc')?.textContent).toContain('No description');
+    expect(element.querySelectorAll('tbody tr')[1].querySelector('.cell-desc')?.textContent).toContain(
+      'No description',
+    );
   });
 
   it('emits edit and remove for the clicked row', () => {

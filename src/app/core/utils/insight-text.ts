@@ -10,7 +10,11 @@ export interface InsightView {
  * The backend decides *which* insights apply; this only words them.
  * `period` lets the dashboard say "this month" or "in August".
  */
-export function describeInsight(insight: Insight, formatAmount: (value: number) => string, period = 'this month'): InsightView {
+export function describeInsight(
+  insight: Insight,
+  formatAmount: (value: number) => string,
+  period = 'this month',
+): InsightView {
   const category = insight.category ?? 'This category';
   const amount = formatAmount(insight.amount ?? 0);
   const percent = `${insight.percentage ?? 0}%`;

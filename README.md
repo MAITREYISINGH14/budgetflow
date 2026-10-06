@@ -1,4 +1,4 @@
- BudgetFlow
+BudgetFlow
 
 A personal finance and budget manager built with Angular 21.
 

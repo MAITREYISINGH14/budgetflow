@@ -72,7 +72,10 @@ export class TransactionsPage {
 
   /** Every matching row in display order. Used for the table and for CSV export. */
   protected readonly matching = computed(() =>
-    sortTransactions(filterTransactions(this.store.transactionViews(), this.filters(), this.today), this.filters().sort),
+    sortTransactions(
+      filterTransactions(this.store.transactionViews(), this.filters(), this.today),
+      this.filters().sort,
+    ),
   );
 
   /**

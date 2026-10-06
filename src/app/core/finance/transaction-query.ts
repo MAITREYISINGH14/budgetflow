@@ -6,7 +6,11 @@ import { TransactionFilters } from '../utils/transaction-filters';
  * Filters combine with AND: each one can only remove rows, never add them back,
  * so no filter can overwrite another. Search is the only OR (description or category).
  */
-export function filterTransactions(items: readonly TransactionView[], filters: TransactionFilters, today: string): TransactionView[] {
+export function filterTransactions(
+  items: readonly TransactionView[],
+  filters: TransactionFilters,
+  today: string,
+): TransactionView[] {
   const { startDate, endDate } = resolveDateRange(filters.range, today, filters);
   const search = filters.search.trim().toLowerCase();
 

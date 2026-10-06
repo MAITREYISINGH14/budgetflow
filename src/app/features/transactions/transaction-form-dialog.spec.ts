@@ -59,7 +59,8 @@ describe('TransactionFormDialog', () => {
   });
 
   it('only offers categories for the selected type', () => {
-    const options = () => Array.from(element.querySelectorAll('#txn-category option')).map((o) => o.textContent?.trim());
+    const options = () =>
+      Array.from(element.querySelectorAll('#txn-category option')).map((o) => o.textContent?.trim());
     expect(options()).toContain('Food');
     expect(options()).not.toContain('Salary');
 
@@ -77,7 +78,13 @@ describe('TransactionFormDialog', () => {
   it('submits a trimmed payload once, even when clicked twice', () => {
     const response = new Subject<Transaction>();
     store.createTransaction.mockReturnValue(response);
-    form().setValue({ type: 'EXPENSE', amount: 250.5, categoryId: 'food', description: '  Lunch  ', date: '2026-01-15' });
+    form().setValue({
+      type: 'EXPENSE',
+      amount: 250.5,
+      categoryId: 'food',
+      description: '  Lunch  ',
+      date: '2026-01-15',
+    });
 
     component['submit']();
     component['submit']();
@@ -97,7 +104,9 @@ describe('TransactionFormDialog', () => {
   });
 
   it('keeps the dialog open and shows the error when saving fails', () => {
-    store.createTransaction.mockReturnValue(throwError(() => new ApiError(422, 'The free MockAPI plan stores up to 100 transactions.')));
+    store.createTransaction.mockReturnValue(
+      throwError(() => new ApiError(422, 'The free MockAPI plan stores up to 100 transactions.')),
+    );
     form().setValue({ type: 'EXPENSE', amount: 10, categoryId: 'food', description: '', date: '2026-01-15' });
 
     component['submit']();

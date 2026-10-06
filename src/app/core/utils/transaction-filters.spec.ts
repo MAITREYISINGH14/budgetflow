@@ -47,19 +47,29 @@ describe('transaction filters <-> URL', () => {
 
   it('falls back to defaults for hand-edited garbage', () => {
     const filters = parseTransactionFilters(
-      params({ type: 'TRANSFER', category: 'rent', range: 'forever', from: '2026-02-31', min: '-5', sort: 'random', page: '0' }),
+      params({
+        type: 'TRANSFER',
+        category: 'rent',
+        range: 'forever',
+        from: '2026-02-31',
+        min: '-5',
+        sort: 'random',
+        page: '0',
+      }),
     );
     expect(filters).toEqual(DEFAULT_FILTERS);
   });
 
   it('writes only non-default values to the URL', () => {
     expect(toQueryParams(DEFAULT_FILTERS)).toEqual({});
-    expect(toQueryParams({ ...DEFAULT_FILTERS, type: 'EXPENSE', categoryId: 'food', sort: 'oldest', page: 3 })).toEqual({
-      type: 'EXPENSE',
-      category: 'food',
-      sort: 'oldest',
-      page: 3,
-    });
+    expect(toQueryParams({ ...DEFAULT_FILTERS, type: 'EXPENSE', categoryId: 'food', sort: 'oldest', page: 3 })).toEqual(
+      {
+        type: 'EXPENSE',
+        category: 'food',
+        sort: 'oldest',
+        page: 3,
+      },
+    );
   });
 
   it('round-trips through the URL without losing anything', () => {
@@ -90,7 +100,9 @@ describe('filter helpers', () => {
 
   it('reports impossible combinations', () => {
     expect(findFilterProblem({ ...DEFAULT_FILTERS, minAmount: 500, maxAmount: 100 })).toContain('Minimum');
-    expect(findFilterProblem({ ...DEFAULT_FILTERS, range: 'custom', from: '2026-09-10', to: '2026-09-01' })).toContain('start date');
+    expect(findFilterProblem({ ...DEFAULT_FILTERS, range: 'custom', from: '2026-09-10', to: '2026-09-01' })).toContain(
+      'start date',
+    );
     expect(findFilterProblem({ ...DEFAULT_FILTERS, minAmount: -1 })).toContain('negative');
     expect(findFilterProblem({ ...DEFAULT_FILTERS, minAmount: 100, maxAmount: 100 })).toBeNull();
   });

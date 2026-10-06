@@ -15,13 +15,17 @@ export class BudgetApi {
   list(): Observable<Budget[]> {
     return this.http.get<unknown>(this.url).pipe(
       map((rows) => normalizeList(rows, toBudget)),
-      catchError((error: unknown) => (error instanceof ApiError && error.status === 404 ? of([]) : throwError(() => error))),
+      catchError((error: unknown) =>
+        error instanceof ApiError && error.status === 404 ? of([]) : throwError(() => error),
+      ),
     );
   }
 
   create(payload: BudgetPayload): Observable<Budget> {
     const now = new Date().toISOString();
-    return this.http.post<Record<string, unknown>>(this.url, { ...payload, createdAt: now, updatedAt: now }).pipe(map(strict));
+    return this.http
+      .post<Record<string, unknown>>(this.url, { ...payload, createdAt: now, updatedAt: now })
+      .pipe(map(strict));
   }
 
   updateLimit(existing: Budget, limit: number): Observable<Budget> {

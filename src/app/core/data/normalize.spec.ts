@@ -1,11 +1,27 @@
 import { normalizeList, toBudget, toTransaction } from './normalize';
 
 describe('toTransaction', () => {
-  const valid = { id: '7', type: 'EXPENSE', amount: '250.50', categoryId: 'food', description: 'Lunch', date: '2026-09-01T00:00:00Z', createdAt: 'x', updatedAt: 'y' };
+  const valid = {
+    id: '7',
+    type: 'EXPENSE',
+    amount: '250.50',
+    categoryId: 'food',
+    description: 'Lunch',
+    date: '2026-09-01T00:00:00Z',
+    createdAt: 'x',
+    updatedAt: 'y',
+  };
 
   it('accepts a valid record and coerces types', () => {
     expect(toTransaction(valid)).toEqual({
-      id: '7', type: 'EXPENSE', amount: 250.5, categoryId: 'food', description: 'Lunch', date: '2026-09-01', createdAt: 'x', updatedAt: 'y',
+      id: '7',
+      type: 'EXPENSE',
+      amount: 250.5,
+      categoryId: 'food',
+      description: 'Lunch',
+      date: '2026-09-01',
+      createdAt: 'x',
+      updatedAt: 'y',
     });
   });
 
@@ -23,7 +39,10 @@ describe('toTransaction', () => {
 
 describe('toBudget', () => {
   it('accepts a valid budget, including a zero limit', () => {
-    expect(toBudget({ id: '1', categoryId: 'food', month: '9', year: 2026, limit: 0 })).toMatchObject({ month: 9, limit: 0 });
+    expect(toBudget({ id: '1', categoryId: 'food', month: '9', year: 2026, limit: 0 })).toMatchObject({
+      month: 9,
+      limit: 0,
+    });
   });
 
   it('rejects income categories and invalid months', () => {
@@ -34,7 +53,10 @@ describe('toBudget', () => {
 
 describe('normalizeList', () => {
   it('skips rows that are not BudgetFlow records, such as MockAPI sample data', () => {
-    const rows = [{ id: '1', name: 'Sample', avatar: 'x' }, { id: '2', type: 'INCOME', amount: 100, categoryId: 'salary', date: '2026-09-01' }];
+    const rows = [
+      { id: '1', name: 'Sample', avatar: 'x' },
+      { id: '2', type: 'INCOME', amount: 100, categoryId: 'salary', date: '2026-09-01' },
+    ];
     expect(normalizeList(rows, toTransaction).map((t) => t.id)).toEqual(['2']);
   });
 

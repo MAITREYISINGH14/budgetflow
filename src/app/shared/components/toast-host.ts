@@ -12,7 +12,12 @@ import { ToastService } from '../../core/services/toast.service';
             {{ toast.tone === 'success' ? 'check_circle' : 'error' }}
           </span>
           <span class="toast__text">{{ toast.message }}</span>
-          <button type="button" class="icon-btn" aria-label="Dismiss notification" (click)="toastService.dismiss(toast.id)">
+          <button
+            type="button"
+            class="icon-btn"
+            aria-label="Dismiss notification"
+            (click)="toastService.dismiss(toast.id)"
+          >
             <span class="material-symbols-outlined" aria-hidden="true">close</span>
           </button>
         </div>

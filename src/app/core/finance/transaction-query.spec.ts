@@ -3,8 +3,25 @@ import { findCategory } from '../categories';
 import { DEFAULT_FILTERS } from '../utils/transaction-filters';
 import { filterTransactions, paginate, sortTransactions } from './transaction-query';
 
-function view(id: string, type: TransactionView['type'], amount: number, categoryId: string, date: string, description = ''): TransactionView {
-  return { id, type, amount, categoryId, category: findCategory(categoryId)!, description, date, createdAt: `${date}T10:00:00Z`, updatedAt: '' };
+function view(
+  id: string,
+  type: TransactionView['type'],
+  amount: number,
+  categoryId: string,
+  date: string,
+  description = '',
+): TransactionView {
+  return {
+    id,
+    type,
+    amount,
+    categoryId,
+    category: findCategory(categoryId)!,
+    description,
+    date,
+    createdAt: `${date}T10:00:00Z`,
+    updatedAt: '',
+  };
 }
 
 const items = [
@@ -22,18 +39,31 @@ describe('filterTransactions', () => {
   });
 
   it('combines filters with AND', () => {
-    const result = filterTransactions(items, { ...DEFAULT_FILTERS, type: 'EXPENSE', categoryId: 'food', minAmount: 1000 }, today);
+    const result = filterTransactions(
+      items,
+      { ...DEFAULT_FILTERS, type: 'EXPENSE', categoryId: 'food', minAmount: 1000 },
+      today,
+    );
     expect(result.map((t) => t.id)).toEqual(['4']);
   });
 
   it('searches description and category name, ignoring case', () => {
     expect(filterTransactions(items, { ...DEFAULT_FILTERS, search: 'SWIGGY' }, today).map((t) => t.id)).toEqual(['1']);
-    expect(filterTransactions(items, { ...DEFAULT_FILTERS, search: 'food' }, today).map((t) => t.id)).toEqual(['1', '4']);
+    expect(filterTransactions(items, { ...DEFAULT_FILTERS, search: 'food' }, today).map((t) => t.id)).toEqual([
+      '1',
+      '4',
+    ]);
   });
 
   it('applies date presets relative to today', () => {
-    expect(filterTransactions(items, { ...DEFAULT_FILTERS, range: 'this-month' }, today).map((t) => t.id)).toEqual(['1', '2', '5']);
-    expect(filterTransactions(items, { ...DEFAULT_FILTERS, range: 'last-month' }, today).map((t) => t.id)).toEqual(['3']);
+    expect(filterTransactions(items, { ...DEFAULT_FILTERS, range: 'this-month' }, today).map((t) => t.id)).toEqual([
+      '1',
+      '2',
+      '5',
+    ]);
+    expect(filterTransactions(items, { ...DEFAULT_FILTERS, range: 'last-month' }, today).map((t) => t.id)).toEqual([
+      '3',
+    ]);
   });
 
   it('treats the amount range as inclusive', () => {
@@ -49,7 +79,13 @@ describe('filterTransactions', () => {
 describe('sortTransactions', () => {
   it('sorts newest first by default without mutating the input', () => {
     const copy = [...items];
-    expect(sortTransactions(items, 'newest').map((t) => t.date)).toEqual(['2026-10-02', '2026-10-02', '2026-10-01', '2026-09-15', '2026-08-20']);
+    expect(sortTransactions(items, 'newest').map((t) => t.date)).toEqual([
+      '2026-10-02',
+      '2026-10-02',
+      '2026-10-01',
+      '2026-09-15',
+      '2026-08-20',
+    ]);
     expect(items).toEqual(copy);
   });
 

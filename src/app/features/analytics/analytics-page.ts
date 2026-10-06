@@ -24,7 +24,7 @@ export class AnalyticsPage {
   private readonly format = (value: number, options?: { compact?: boolean }) => this.currency.format(value, options);
 
   protected readonly today = todayIso();
-  protected readonly options: Array<{ value: RangeOption; label: string }> = [
+  protected readonly options: { value: RangeOption; label: string }[] = [
     { value: '1', label: '1 month' },
     { value: '3', label: '3 months' },
     { value: '6', label: '6 months' },

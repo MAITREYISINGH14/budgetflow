@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { finalize,forkJoin, from, mergeMap, Observable, scan, tap, throwError } from 'rxjs';
+import { finalize, forkJoin, from, mergeMap, Observable, scan, tap, throwError } from 'rxjs';
 import { findCategory } from '../categories';
 import { MOCKAPI_RECORD_LIMIT } from '../config';
 import { BudgetApi } from '../data/budget-api';
@@ -97,7 +97,11 @@ export class FinanceStore {
   createTransaction(payload: TransactionPayload): Observable<Transaction> {
     if (this.transactionList().length >= MOCKAPI_RECORD_LIMIT) {
       return throwError(
-        () => new ApiError(422, `The free MockAPI plan stores up to ${MOCKAPI_RECORD_LIMIT} transactions. Delete some to add more.`),
+        () =>
+          new ApiError(
+            422,
+            `The free MockAPI plan stores up to ${MOCKAPI_RECORD_LIMIT} transactions. Delete some to add more.`,
+          ),
       );
     }
     return this.transactionApi
@@ -128,7 +132,9 @@ export class FinanceStore {
     );
     if (duplicate) {
       const name = findCategory(payload.categoryId)?.name ?? 'This';
-      return throwError(() => new ApiError(409, `A ${name} budget for ${formatMonth(toIsoMonth(payload))} already exists.`));
+      return throwError(
+        () => new ApiError(409, `A ${name} budget for ${formatMonth(toIsoMonth(payload))} already exists.`),
+      );
     }
     if (findCategory(payload.categoryId)?.type !== 'EXPENSE') {
       return throwError(() => new ApiError(400, 'Budgets can only be set for expense categories.'));

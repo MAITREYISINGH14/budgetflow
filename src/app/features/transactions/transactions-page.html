@@ -52,7 +52,10 @@
       aria-controls="filter-fields"
     >
       <span class="material-symbols-outlined" aria-hidden="true">filter_list</span>
-      Filters @if (activeFilterCount()) { ({{ activeFilterCount() }}) }
+      Filters
+      @if (activeFilterCount()) {
+        ({{ activeFilterCount() }})
+      }
     </button>
   </div>
 

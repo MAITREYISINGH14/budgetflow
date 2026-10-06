@@ -9,18 +9,33 @@ const shopping = { id: 'shopping', name: 'Shopping', type: 'EXPENSE' as const };
 
 describe('generateInsights', () => {
   it('reports a category that grew by more than 20%', () => {
-    const insights = generateInsights(input({ current: new Map([['Food', 8200]]), previous: new Map([['Food', 6600]]) }));
-    expect(insights).toContainEqual({ kind: 'SPENDING_INCREASE', severity: 'WARNING', category: 'Food', percentage: 24 });
+    const insights = generateInsights(
+      input({ current: new Map([['Food', 8200]]), previous: new Map([['Food', 6600]]) }),
+    );
+    expect(insights).toContainEqual({
+      kind: 'SPENDING_INCREASE',
+      severity: 'WARNING',
+      category: 'Food',
+      percentage: 24,
+    });
   });
 
   it('does not report an increase of exactly 20%', () => {
-    const insights = generateInsights(input({ current: new Map([['Food', 6000]]), previous: new Map([['Food', 5000]]) }));
+    const insights = generateInsights(
+      input({ current: new Map([['Food', 6000]]), previous: new Map([['Food', 5000]]) }),
+    );
     expect(insights.some((i) => i.kind === 'SPENDING_INCREASE')).toBe(false);
   });
 
   it('reports decreases, including a category with no spending this month', () => {
     const insights = generateInsights(
-      input({ current: new Map([['Transport', 2100]]), previous: new Map([['Transport', 3800], ['Travel', 12000]]) }),
+      input({
+        current: new Map([['Transport', 2100]]),
+        previous: new Map([
+          ['Transport', 3800],
+          ['Travel', 12000],
+        ]),
+      }),
     );
     expect(insights.filter((i) => i.kind === 'SPENDING_DECREASE')).toEqual([
       { kind: 'SPENDING_DECREASE', severity: 'POSITIVE', category: 'Travel', percentage: 100 },
@@ -29,12 +44,16 @@ describe('generateInsights', () => {
   });
 
   it('ignores changes when last month was too small to compare', () => {
-    const insights = generateInsights(input({ current: new Map([['Other', 1500]]), previous: new Map([['Other', 200]]) }));
+    const insights = generateInsights(
+      input({ current: new Map([['Other', 1500]]), previous: new Map([['Other', 200]]) }),
+    );
     expect(insights.some((i) => i.category === 'Other')).toBe(false);
   });
 
   it('reports exceeded budgets with the overspent amount first', () => {
-    const insights = generateInsights(input({ budgets: [{ status: 'EXCEEDED', remaining: -2400, category: shopping }] }));
+    const insights = generateInsights(
+      input({ budgets: [{ status: 'EXCEEDED', remaining: -2400, category: shopping }] }),
+    );
     expect(insights[0]).toEqual({ kind: 'BUDGET_EXCEEDED', severity: 'WARNING', category: 'Shopping', amount: 2400 });
   });
 
@@ -71,7 +90,13 @@ describe('insightsForMonth', () => {
       t('EXPENSE', 8200, 'food', '2026-10-03'),
       t('INCOME', 50000, 'salary', '2026-10-01'),
     ];
-    const septemberBudget = { month: 9, year: 2026, status: 'EXCEEDED', remaining: -100, category: shopping } as BudgetView;
+    const septemberBudget = {
+      month: 9,
+      year: 2026,
+      status: 'EXCEEDED',
+      remaining: -100,
+      category: shopping,
+    } as BudgetView;
 
     const kinds = insightsForMonth(transactions, [septemberBudget], { year: 2026, month: 10 }).map((i) => i.kind);
     expect(kinds).toEqual(['SPENDING_INCREASE', 'HIGH_SAVINGS']);

@@ -4,7 +4,13 @@
     <div class="segmented">
       @for (opt of options; track opt.value) {
         <label>
-          <input type="radio" name="range" [value]="opt.value" [checked]="option() === opt.value" (change)="selectOption(opt.value)" />
+          <input
+            type="radio"
+            name="range"
+            [value]="opt.value"
+            [checked]="option() === opt.value"
+            (change)="selectOption(opt.value)"
+          />
           {{ opt.label }}
         </label>
       }
@@ -118,7 +124,11 @@
             <h2 class="panel__title" id="category-spending-title">Spending by category</h2>
           </div>
           <div class="panel__body">
-            <bf-chart [config]="categoryChart()" label="Spending by category for the selected period" [height]="categoryChartHeight()" />
+            <bf-chart
+              [config]="categoryChart()"
+              label="Spending by category for the selected period"
+              [height]="categoryChartHeight()"
+            />
           </div>
         </section>
       </div>
@@ -139,7 +149,11 @@
           <h2 class="panel__title" id="analytics-ie-title">Income vs expenses</h2>
         </div>
         <div class="panel__body">
-          <bf-chart [config]="incomeExpenseChart()" label="Income and expenses per month in the selected period" [height]="240" />
+          <bf-chart
+            [config]="incomeExpenseChart()"
+            label="Income and expenses per month in the selected period"
+            [height]="240"
+          />
         </div>
       </section>
     </div>

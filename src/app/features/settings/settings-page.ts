@@ -52,9 +52,7 @@ export class SettingsPage {
     const p = this.progress();
     return p && p.total ? Math.round((p.done / p.total) * 100) : 0;
   });
-  protected readonly hasData = computed(
-    () => this.store.transactions().length > 0 || this.store.budgets().length > 0,
-  );
+  protected readonly hasData = computed(() => this.store.transactions().length > 0 || this.store.budgets().length > 0);
 
   protected setCurrency(event: Event): void {
     this.settingsService.update({ currency: (event.target as HTMLSelectElement).value as CurrencyCode });
@@ -82,7 +80,12 @@ export class SettingsPage {
     })
       .pipe(filter(Boolean))
       .subscribe(() =>
-        this.runBulk('Adding demo data', size.transactions + size.budgets, this.store.loadDemoData(), 'Demo data loaded'),
+        this.runBulk(
+          'Adding demo data',
+          size.transactions + size.budgets,
+          this.store.loadDemoData(),
+          'Demo data loaded',
+        ),
       );
   }
 

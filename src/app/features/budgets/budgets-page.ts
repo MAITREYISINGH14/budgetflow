@@ -10,7 +10,14 @@ import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
 import { BUDGET_STATUS_META, buildBudgetAlerts } from '../../core/utils/budget-display';
-import { compareYearMonth, currentYearMonth, formatMonth, parseIsoMonth, shiftYearMonth, toIsoMonth } from '../../core/utils/dates';
+import {
+  compareYearMonth,
+  currentYearMonth,
+  formatMonth,
+  parseIsoMonth,
+  shiftYearMonth,
+  toIsoMonth,
+} from '../../core/utils/dates';
 import { sumAmounts } from '../../core/utils/money';
 import { BudgetMeter } from '../../shared/components/budget-meter';
 import { confirmAction } from '../../shared/components/confirm-dialog';

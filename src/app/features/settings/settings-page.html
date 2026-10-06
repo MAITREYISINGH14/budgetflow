@@ -1,4 +1,6 @@
-<p class="page-toolbar__lead intro">Preferences are saved in this browser. Transactions and budgets are stored in MockAPI.</p>
+<p class="page-toolbar__lead intro">
+  Preferences are saved in this browser. Transactions and budgets are stored in MockAPI.
+</p>
 
 <div class="settings">
   <section class="panel setting" aria-labelledby="currency-title">
@@ -35,11 +37,21 @@
       <legend class="sr-only">Default transaction type</legend>
       <div class="segmented">
         <label>
-          <input type="radio" name="default-type" [checked]="settings().defaultTransactionType === 'EXPENSE'" (change)="setDefaultType('EXPENSE')" />
+          <input
+            type="radio"
+            name="default-type"
+            [checked]="settings().defaultTransactionType === 'EXPENSE'"
+            (change)="setDefaultType('EXPENSE')"
+          />
           Expense
         </label>
         <label>
-          <input type="radio" name="default-type" [checked]="settings().defaultTransactionType === 'INCOME'" (change)="setDefaultType('INCOME')" />
+          <input
+            type="radio"
+            name="default-type"
+            [checked]="settings().defaultTransactionType === 'INCOME'"
+            (change)="setDefaultType('INCOME')"
+          />
           Income
         </label>
       </div>
@@ -55,11 +67,21 @@
       <legend class="sr-only">Default transaction date</legend>
       <div class="segmented">
         <label>
-          <input type="radio" name="date-behavior" [checked]="settings().defaultDateBehavior === 'today'" (change)="setDateBehavior('today')" />
+          <input
+            type="radio"
+            name="date-behavior"
+            [checked]="settings().defaultDateBehavior === 'today'"
+            (change)="setDateBehavior('today')"
+          />
           Today
         </label>
         <label>
-          <input type="radio" name="date-behavior" [checked]="settings().defaultDateBehavior === 'last-used'" (change)="setDateBehavior('last-used')" />
+          <input
+            type="radio"
+            name="date-behavior"
+            [checked]="settings().defaultDateBehavior === 'last-used'"
+            (change)="setDateBehavior('last-used')"
+          />
           Last date used
         </label>
       </div>
@@ -96,7 +118,9 @@
       } @else {
         <div class="data__actions">
           <button type="button" class="btn btn--secondary" (click)="loadDemoData()">Load demo data</button>
-          <button type="button" class="btn btn--danger" (click)="deleteAllData()" [disabled]="!hasData()">Delete all data</button>
+          <button type="button" class="btn btn--danger" (click)="deleteAllData()" [disabled]="!hasData()">
+            Delete all data
+          </button>
         </div>
       }
     } @else if (store.status() === 'error') {

@@ -1,6 +1,6 @@
 export type CurrencyCode = 'INR' | 'USD' | 'EUR' | 'GBP';
 
-export const CURRENCIES: ReadonlyArray<{ code: CurrencyCode; label: string; locale: string }> = [
+export const CURRENCIES: readonly { code: CurrencyCode; label: string; locale: string }[] = [
   { code: 'INR', label: 'Indian rupee (₹)', locale: 'en-IN' },
   { code: 'USD', label: 'US dollar ($)', locale: 'en-US' },
   { code: 'EUR', label: 'Euro (€)', locale: 'en-IE' },
@@ -30,7 +30,11 @@ function formatter(currency: CurrencyCode, digits: number, compact: boolean): In
  * Locale-aware currency formatting. INR uses Indian digit grouping (₹1,25,000).
  * Whole amounts show no decimals; anything with paise shows two.
  */
-export function formatMoney(value: number, currency: CurrencyCode = 'INR', options: { compact?: boolean } = {}): string {
+export function formatMoney(
+  value: number,
+  currency: CurrencyCode = 'INR',
+  options: { compact?: boolean } = {},
+): string {
   if (!Number.isFinite(value)) return formatter(currency, 0, false).format(0);
   const digits = Number.isInteger(value) ? 0 : 2;
   return formatter(currency, digits, options.compact ?? false).format(value);

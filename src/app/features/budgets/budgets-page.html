@@ -4,7 +4,13 @@
       <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
     </button>
     <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
-    <button type="button" class="icon-btn" (click)="changeMonth(1)" [disabled]="!canGoForward()" aria-label="Next month">
+    <button
+      type="button"
+      class="icon-btn"
+      (click)="changeMonth(1)"
+      [disabled]="!canGoForward()"
+      aria-label="Next month"
+    >
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
     </button>
   </div>
@@ -15,7 +21,9 @@
       class="btn"
       (click)="openForm()"
       [disabled]="store.status() !== 'ready' || availableCategories().length === 0"
-      [attr.title]="availableCategories().length === 0 ? 'Every expense category already has a budget this month' : null"
+      [attr.title]="
+        availableCategories().length === 0 ? 'Every expense category already has a budget this month' : null
+      "
     >
       <span class="material-symbols-outlined" aria-hidden="true">add</span>
       Add budget
@@ -53,7 +61,9 @@
       <ul class="notice-list">
         @for (alert of alerts(); track alert.budgetId) {
           <li class="notice" [attr.data-tone]="alert.tone">
-            <span class="material-symbols-outlined" aria-hidden="true">{{ alert.tone === 'danger' ? 'error' : 'warning' }}</span>
+            <span class="material-symbols-outlined" aria-hidden="true">{{
+              alert.tone === 'danger' ? 'error' : 'warning'
+            }}</span>
             <span>{{ alert.message }}</span>
           </li>
         }
@@ -90,7 +100,11 @@
         <p class="budget-card__figures">
           <span class="budget-card__spent figure">{{ card.budget.spent | money }}</span>
           <span class="budget-card__limit">
-            @if (card.budget.status === 'NO_LIMIT') { no limit } @else { of {{ card.budget.limit | money }} }
+            @if (card.budget.status === 'NO_LIMIT') {
+              no limit
+            } @else {
+              of {{ card.budget.limit | money }}
+            }
           </span>
         </p>
 
@@ -106,7 +120,12 @@
         </div>
 
         <div class="budget-card__actions">
-          <button type="button" class="icon-btn" (click)="openForm(card.budget)" [attr.aria-label]="'Edit ' + card.budget.category.name + ' budget'">
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="openForm(card.budget)"
+            [attr.aria-label]="'Edit ' + card.budget.category.name + ' budget'"
+          >
             <span class="material-symbols-outlined" aria-hidden="true">edit</span>
           </button>
           <button

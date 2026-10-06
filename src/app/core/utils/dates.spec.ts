@@ -46,7 +46,9 @@ describe('date helpers', () => {
   });
 
   it('allows an open-ended custom range', () => {
-    expect(resolveDateRange('custom', '2026-10-05', { from: '2026-01-01', to: null })).toEqual({ startDate: '2026-01-01' });
+    expect(resolveDateRange('custom', '2026-10-05', { from: '2026-01-01', to: null })).toEqual({
+      startDate: '2026-01-01',
+    });
   });
 
   it('formats display dates and month labels', () => {

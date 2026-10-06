@@ -16,13 +16,17 @@ export class TransactionApi {
     return this.http.get<unknown>(this.url).pipe(
       map((rows) => normalizeList(rows, toTransaction)),
       // MockAPI answers 404 instead of [] for an empty resource.
-      catchError((error: unknown) => (error instanceof ApiError && error.status === 404 ? of([]) : throwError(() => error))),
+      catchError((error: unknown) =>
+        error instanceof ApiError && error.status === 404 ? of([]) : throwError(() => error),
+      ),
     );
   }
 
   create(payload: TransactionPayload): Observable<Transaction> {
     const now = new Date().toISOString();
-    return this.http.post<Record<string, unknown>>(this.url, { ...payload, createdAt: now, updatedAt: now }).pipe(map(strict));
+    return this.http
+      .post<Record<string, unknown>>(this.url, { ...payload, createdAt: now, updatedAt: now })
+      .pipe(map(strict));
   }
 
   /** MockAPI supports PUT (full replace), so the whole record is sent. */

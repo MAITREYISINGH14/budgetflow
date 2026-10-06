@@ -36,8 +36,18 @@ describe('buildBudgetAlerts', () => {
       [
         budget({ id: '1', status: 'NEAR_LIMIT', percentageUsed: 82 }),
         budget({ id: '2', status: 'HEALTHY', percentageUsed: 40 }),
-        budget({ id: '3', status: 'EXCEEDED', remaining: -2300, category: { id: 'shopping', name: 'Shopping', type: 'EXPENSE' } }),
-        budget({ id: '4', status: 'NEAR_LIMIT', percentageUsed: 99.3, category: { id: 'bills', name: 'Bills', type: 'EXPENSE' } }),
+        budget({
+          id: '3',
+          status: 'EXCEEDED',
+          remaining: -2300,
+          category: { id: 'shopping', name: 'Shopping', type: 'EXPENSE' },
+        }),
+        budget({
+          id: '4',
+          status: 'NEAR_LIMIT',
+          percentageUsed: 99.3,
+          category: { id: 'bills', name: 'Bills', type: 'EXPENSE' },
+        }),
       ],
       format,
     );

@@ -4,7 +4,13 @@
       <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
     </button>
     <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
-    <button type="button" class="icon-btn" (click)="changeMonth(1)" [disabled]="isCurrentMonth()" aria-label="Next month">
+    <button
+      type="button"
+      class="icon-btn"
+      (click)="changeMonth(1)"
+      [disabled]="isCurrentMonth()"
+      aria-label="Next month"
+    >
       <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
     </button>
   </div>
@@ -116,7 +122,10 @@
               }
             </ul>
           } @else {
-            <bf-state-message title="Nothing to flag." message="Insights appear once there is enough activity to compare." />
+            <bf-state-message
+              title="Nothing to flag."
+              message="Insights appear once there is enough activity to compare."
+            />
           }
         </div>
       </section>
@@ -142,7 +151,11 @@
         </div>
         <div class="panel__body">
           @if (hasTrend()) {
-            <bf-chart [config]="incomeExpenseChart()" label="Income and expenses per month for the last six months" [height]="230" />
+            <bf-chart
+              [config]="incomeExpenseChart()"
+              label="Income and expenses per month for the last six months"
+              [height]="230"
+            />
           } @else {
             <bf-state-message title="No activity in the last six months." />
           }

@@ -112,6 +112,8 @@ export class SettingsService {
   private applyTheme(theme: ThemeMode): void {
     const root = this.document.documentElement;
     root.setAttribute('data-theme', theme);
-    this.document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0b111c' : '#f4f6fa');
+    this.document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#0b111c' : '#f4f6fa');
   }
 }

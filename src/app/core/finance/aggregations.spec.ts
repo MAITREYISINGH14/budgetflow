@@ -9,7 +9,13 @@ function tx(type: Transaction['type'], amount: number, categoryId: string, date:
 describe('summarize', () => {
   it('builds the dashboard summary', () => {
     const items = [tx('INCOME', 80000, 'salary', '2026-09-01'), tx('EXPENSE', 37500, 'bills', '2026-09-03')];
-    expect(summarize(items)).toEqual({ income: 80000, expenses: 37500, balance: 42500, savingsRate: 53.1, transactionCount: 2 });
+    expect(summarize(items)).toEqual({
+      income: 80000,
+      expenses: 37500,
+      balance: 42500,
+      savingsRate: 53.1,
+      transactionCount: 2,
+    });
   });
 
   it('returns 0% instead of NaN or Infinity when there is no income', () => {
@@ -29,8 +35,16 @@ describe('summarize', () => {
 
 describe('inRange', () => {
   it('includes both ends of the range', () => {
-    const items = [tx('EXPENSE', 1, 'food', '2026-08-31'), tx('EXPENSE', 1, 'food', '2026-09-01'), tx('EXPENSE', 1, 'food', '2026-09-30'), tx('EXPENSE', 1, 'food', '2026-10-01')];
-    expect(inRange(items, { startDate: '2026-09-01', endDate: '2026-09-30' }).map((t) => t.date)).toEqual(['2026-09-01', '2026-09-30']);
+    const items = [
+      tx('EXPENSE', 1, 'food', '2026-08-31'),
+      tx('EXPENSE', 1, 'food', '2026-09-01'),
+      tx('EXPENSE', 1, 'food', '2026-09-30'),
+      tx('EXPENSE', 1, 'food', '2026-10-01'),
+    ];
+    expect(inRange(items, { startDate: '2026-09-01', endDate: '2026-09-30' }).map((t) => t.date)).toEqual([
+      '2026-09-01',
+      '2026-09-30',
+    ]);
   });
 });
 

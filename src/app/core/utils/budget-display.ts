@@ -23,7 +23,10 @@ export interface BudgetAlert {
 }
 
 /** In-app alerts for budgets that need attention, most urgent first. */
-export function buildBudgetAlerts(budgets: readonly BudgetView[], formatAmount: (value: number) => string): BudgetAlert[] {
+export function buildBudgetAlerts(
+  budgets: readonly BudgetView[],
+  formatAmount: (value: number) => string,
+): BudgetAlert[] {
   const exceeded = budgets
     .filter((b) => b.status === 'EXCEEDED')
     .sort((a, b) => a.remaining - b.remaining)

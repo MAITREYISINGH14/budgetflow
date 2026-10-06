@@ -106,11 +106,7 @@ export interface MonthlyTrendPoint {
 }
 
 export type InsightKind =
-  | 'BUDGET_EXCEEDED'
-  | 'OVERSPENT_INCOME'
-  | 'SPENDING_INCREASE'
-  | 'SPENDING_DECREASE'
-  | 'HIGH_SAVINGS';
+  'BUDGET_EXCEEDED' | 'OVERSPENT_INCOME' | 'SPENDING_INCREASE' | 'SPENDING_DECREASE' | 'HIGH_SAVINGS';
 
 export interface Insight {
   kind: InsightKind;

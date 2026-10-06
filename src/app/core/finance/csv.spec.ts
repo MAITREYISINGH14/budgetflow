@@ -28,8 +28,28 @@ describe('escapeCsvCell', () => {
 describe('transactionsToCsv', () => {
   it('builds the export with a header, BOM and CRLF line endings', () => {
     const rows: TransactionView[] = [
-      { id: '1', type: 'EXPENSE', amount: 250.5, categoryId: 'food', category: findCategory('food')!, description: 'Café, "special"', date: '2026-09-01', createdAt: '', updatedAt: '' },
-      { id: '2', type: 'INCOME', amount: 80000, categoryId: 'salary', category: findCategory('salary')!, description: '', date: '2026-09-02', createdAt: '', updatedAt: '' },
+      {
+        id: '1',
+        type: 'EXPENSE',
+        amount: 250.5,
+        categoryId: 'food',
+        category: findCategory('food')!,
+        description: 'Café, "special"',
+        date: '2026-09-01',
+        createdAt: '',
+        updatedAt: '',
+      },
+      {
+        id: '2',
+        type: 'INCOME',
+        amount: 80000,
+        categoryId: 'salary',
+        category: findCategory('salary')!,
+        description: '',
+        date: '2026-09-02',
+        createdAt: '',
+        updatedAt: '',
+      },
     ];
     expect(transactionsToCsv(rows)).toBe(
       '\uFEFFDate,Type,Category,Description,Amount\r\n' +

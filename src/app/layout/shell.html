@@ -30,7 +30,9 @@
       [attr.aria-checked]="settings.isDark()"
       (click)="toggleTheme()"
     >
-      <span class="material-symbols-outlined" aria-hidden="true">{{ settings.isDark() ? 'dark_mode' : 'light_mode' }}</span>
+      <span class="material-symbols-outlined" aria-hidden="true">{{
+        settings.isDark() ? 'dark_mode' : 'light_mode'
+      }}</span>
       <span class="theme-toggle__label">Dark mode</span>
       <span class="theme-toggle__switch" aria-hidden="true"><span class="theme-toggle__knob"></span></span>
     </button>
@@ -51,7 +53,9 @@
         (click)="toggleTheme()"
         [attr.aria-label]="settings.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
       >
-        <span class="material-symbols-outlined" aria-hidden="true">{{ settings.isDark() ? 'light_mode' : 'dark_mode' }}</span>
+        <span class="material-symbols-outlined" aria-hidden="true">{{
+          settings.isDark() ? 'light_mode' : 'dark_mode'
+        }}</span>
       </button>
     </header>
 

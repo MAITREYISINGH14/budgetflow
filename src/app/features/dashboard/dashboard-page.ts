@@ -9,10 +9,22 @@ import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
 import { buildBudgetAlerts } from '../../core/utils/budget-display';
-import { compareYearMonth, currentYearMonth, formatMonth, monthBounds, shiftYearMonth, toIsoMonth } from '../../core/utils/dates';
+import {
+  compareYearMonth,
+  currentYearMonth,
+  formatMonth,
+  monthBounds,
+  shiftYearMonth,
+  toIsoMonth,
+} from '../../core/utils/dates';
 import { describeInsight } from '../../core/utils/insight-text';
 import { ChartComponent } from '../../shared/charts/chart';
-import { categoryDoughnut, colorForIndex, incomeExpenseBars, spendingTrendLine } from '../../shared/charts/chart-configs';
+import {
+  categoryDoughnut,
+  colorForIndex,
+  incomeExpenseBars,
+  spendingTrendLine,
+} from '../../shared/charts/chart-configs';
 import { BudgetMeter } from '../../shared/components/budget-meter';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';

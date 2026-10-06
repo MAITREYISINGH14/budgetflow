@@ -1,4 +1,13 @@
-import {afterRenderEffect, ChangeDetectionStrategy,Component,DestroyRef,ElementRef,inject,input,viewChild,} from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  input,
+  viewChild,
+} from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { SettingsService } from '../../core/services/settings.service';
 import { BfChartConfig } from './chart-configs';

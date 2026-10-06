@@ -9,8 +9,26 @@ import { FinanceStore } from './finance-store';
 const TX_URL = `${MOCKAPI_BASE_URL}/transactions`;
 const BUDGET_URL = `${MOCKAPI_BASE_URL}/budgets`;
 
-const food = { id: '1', type: 'EXPENSE', amount: 8200, categoryId: 'food', description: 'Groceries', date: '2026-09-10', createdAt: 'a', updatedAt: 'a' };
-const salary = { id: '2', type: 'INCOME', amount: 80000, categoryId: 'salary', description: '', date: '2026-09-01', createdAt: 'b', updatedAt: 'b' };
+const food = {
+  id: '1',
+  type: 'EXPENSE',
+  amount: 8200,
+  categoryId: 'food',
+  description: 'Groceries',
+  date: '2026-09-10',
+  createdAt: 'a',
+  updatedAt: 'a',
+};
+const salary = {
+  id: '2',
+  type: 'INCOME',
+  amount: 80000,
+  categoryId: 'salary',
+  description: '',
+  date: '2026-09-01',
+  createdAt: 'b',
+  updatedAt: 'b',
+};
 const foodBudget = { id: '10', categoryId: 'food', month: 9, year: 2026, limit: 10000, createdAt: 'c', updatedAt: 'c' };
 
 describe('FinanceStore', () => {
@@ -42,7 +60,12 @@ describe('FinanceStore', () => {
 
     expect(store.status()).toBe('ready');
     expect(store.transactionViews().map((t) => t.category.name)).toEqual(['Food', 'Salary']);
-    expect(store.budgetViews()[0]).toMatchObject({ spent: 8200, remaining: 1800, percentageUsed: 82, status: 'NEAR_LIMIT' });
+    expect(store.budgetViews()[0]).toMatchObject({
+      spent: 8200,
+      remaining: 1800,
+      percentageUsed: 82,
+      status: 'NEAR_LIMIT',
+    });
 
     store.load(); // already loaded: no new requests
   });
@@ -76,7 +99,9 @@ describe('FinanceStore', () => {
   it('adds a created transaction only after the server confirms', () => {
     loadWith([], []);
 
-    store.createTransaction({ type: 'EXPENSE', amount: 500, categoryId: 'food', description: 'Lunch', date: '2026-09-12' }).subscribe();
+    store
+      .createTransaction({ type: 'EXPENSE', amount: 500, categoryId: 'food', description: 'Lunch', date: '2026-09-12' })
+      .subscribe();
     const request = http.expectOne({ url: TX_URL, method: 'POST' });
     expect(store.transactions()).toEqual([]);
     expect(request.request.body).toMatchObject({ amount: 500, categoryId: 'food' });
@@ -89,7 +114,9 @@ describe('FinanceStore', () => {
     loadWith([], [foodBudget]);
     let error: unknown;
 
-    store.createBudget({ categoryId: 'food', month: 9, year: 2026, limit: 5000 }).subscribe({ error: (e) => (error = e) });
+    store
+      .createBudget({ categoryId: 'food', month: 9, year: 2026, limit: 5000 })
+      .subscribe({ error: (e) => (error = e) });
 
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).status).toBe(409);
@@ -102,9 +129,11 @@ describe('FinanceStore', () => {
     loadWith(full, []);
     let error: unknown;
 
-    store.createTransaction({ type: 'EXPENSE', amount: 1, categoryId: 'food', description: '', date: '2026-09-12' }).subscribe({
-      error: (e) => (error = e),
-    });
+    store
+      .createTransaction({ type: 'EXPENSE', amount: 1, categoryId: 'food', description: '', date: '2026-09-12' })
+      .subscribe({
+        error: (e) => (error = e),
+      });
 
     expect((error as ApiError).status).toBe(422);
     http.expectNone(TX_URL);
