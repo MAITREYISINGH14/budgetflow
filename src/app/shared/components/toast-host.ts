@@ -66,6 +66,19 @@ import { ToastService } from '../../core/services/toast.service';
       color: inherit;
     }
 
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .toast {
+        animation: toast-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+      }
+    }
+
     @media (max-width: 720px) {
       .toasts {
         bottom: 5rem;

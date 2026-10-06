@@ -1,9 +1,6 @@
 /*
- * BudgetFlow themes
  * Light = "Cobalt": white surfaces, cobalt blue actions.
  * Dark  = "Midnight": deep navy surfaces, periwinkle actions.
- * Components only use these variables, so switching data-theme on <html>
- * restyles the whole app (SettingsService sets it).
  */
 :root {
   --font-sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -30,6 +27,11 @@
   --hero-text: #ffffff;
   --hero-label: #d3dcff;
   --hero-accent: #ffffff;
+  --hero-gradient:
+    radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 20%) 0%, transparent 55%),
+    linear-gradient(135deg, #1b3fd8 0%, #2350f5 45%, #5b7cff 100%);
+  --primary-gradient: linear-gradient(135deg, #2350f5 0%, #4a6bff 100%);
+  --page-glow: radial-gradient(70rem 32rem at 85% -12%, rgb(35 80 245 / 9%), transparent 70%);
 
   --sidebar-bg: #ffffff;
   --sidebar-border: #e1e7f0;
@@ -109,6 +111,11 @@
   --hero-text: #ffffff;
   --hero-label: #a8b6d6;
   --hero-accent: #8fa8ff;
+  --hero-gradient:
+    radial-gradient(120% 140% at 100% 0%, rgb(143 168 255 / 24%) 0%, transparent 55%),
+    linear-gradient(135deg, #172036 0%, #1f2b52 55%, #2c3c74 100%);
+  --primary-gradient: linear-gradient(135deg, #8fa8ff 0%, #b4c4ff 100%);
+  --page-glow: radial-gradient(70rem 32rem at 85% -12%, rgb(143 168 255 / 11%), transparent 70%);
 
   --sidebar-bg: #0b111c;
   --sidebar-border: #1a2434;
@@ -171,7 +178,10 @@ html {
 
 body {
   margin: 0;
+  min-height: 100vh;
   background: var(--paper);
+  background-image: var(--page-glow);
+  background-repeat: no-repeat;
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 0.9375rem;
@@ -259,7 +269,7 @@ textarea {
   padding: 0 1.125rem;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--primary);
+  background: var(--primary-gradient);
   color: var(--on-primary);
   font-weight: 700;
   white-space: nowrap;
@@ -267,10 +277,18 @@ textarea {
   text-decoration: none;
   transition:
     background-color 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
 
   &:hover:not(:disabled) {
-    background: var(--primary-hover);
+    filter: brightness(1.06);
+    box-shadow: 0 8px 20px -10px var(--primary);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
   }
 
   &:disabled {
@@ -290,6 +308,8 @@ textarea {
 
   &:hover:not(:disabled) {
     background: var(--surface-hover);
+    box-shadow: none;
+    filter: none;
   }
 }
 
@@ -300,6 +320,7 @@ textarea {
   &:hover:not(:disabled) {
     background: var(--danger);
     filter: brightness(0.92);
+    box-shadow: none;
   }
 }
 
@@ -310,6 +331,8 @@ textarea {
   &:hover:not(:disabled) {
     background: var(--surface-sunken);
     color: var(--text);
+    box-shadow: none;
+    filter: none;
   }
 }
 
@@ -535,6 +558,11 @@ fieldset.field {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
 }
 
 .panel__header {
@@ -746,10 +774,68 @@ fieldset.field {
   }
 }
 
+/* ---------- Motion ----------
+ * Everything below only runs when the device allows motion
+ * (prefers-reduced-motion: no-preference). Animations use fill-mode
+ * "backwards" so that after they finish, normal styles (like hover) apply again.
+ */
+
+@keyframes bf-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes bf-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  // The routed page is the element after <router-outlet>; it is recreated on every navigation.
+  .content > :not(router-outlet) {
+    animation: bf-page-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  .dialog {
+    animation: bf-dialog-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Polish: gradients used on every page ---------- */
+
+// Page titles fade from the text colour into the theme's accent.
+.topbar__title {
+  background: linear-gradient(90deg, var(--text) 30%, var(--primary) 130%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+// Cards get a faint tint of the accent at the top, fading into the surface.
+.panel {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--surface)) 0%,
+    var(--surface) 9rem
+  );
+}
+
+/* Shared entrance animation for list rows and cards on any page */
+@keyframes bf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
 }

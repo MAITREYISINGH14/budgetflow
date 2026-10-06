@@ -89,7 +89,6 @@
   }
 }
 
-// Light/dark switch, pinned to the bottom of the side nav.
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -140,7 +139,7 @@
 
 .theme-toggle[aria-checked='true'] {
   .theme-toggle__switch {
-    background: var(--primary);
+    background: var(--primary-gradient);
   }
 
   .theme-toggle__knob {
@@ -167,7 +166,6 @@
   letter-spacing: -0.025em;
 }
 
-// Phones have no sidebar, so the switch lives in the top bar there.
 .topbar__theme {
   display: none;
   margin-left: auto;

@@ -3,10 +3,13 @@
   gap: 1.25rem;
 }
 
+// ---------- Summary: hero Balance card + three stat cards ----------
+
 .ledger {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
   gap: 1rem;
+  // The section carries .panel; the cards inside are the surfaces here.
   background: transparent;
   border: none;
   box-shadow: none;
@@ -37,9 +40,11 @@
 }
 
 .ledger__item--lead {
+  position: relative;
+  overflow: hidden;
   gap: 0.25rem;
   padding: 1.375rem 1.625rem;
-  background: var(--hero-bg);
+  background: var(--hero-gradient);
   border-color: var(--hero-border);
   color: var(--hero-text);
   box-shadow: var(--shadow-2);
@@ -66,6 +71,16 @@
 
   .ledger__value.is-negative {
     color: var(--hero-text);
+  }
+
+  // A soft band of light, swept across once when the dashboard appears.
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 14%) 50%, transparent 70%);
+    transform: translateX(-120%);
+    pointer-events: none;
   }
 }
 
@@ -168,6 +183,69 @@
   color: var(--text-subtle);
 }
 
+// ---------- Motion ----------
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(120%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  // Cards appear one after another instead of all at once.
+  .ledger__item,
+  .grid > .panel {
+    animation: rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  .ledger__item:nth-child(2) {
+    animation-delay: 60ms;
+  }
+
+  .ledger__item:nth-child(3) {
+    animation-delay: 120ms;
+  }
+
+  .ledger__item:nth-child(4) {
+    animation-delay: 180ms;
+  }
+
+  .dashboard > :nth-child(2) > .panel {
+    animation-delay: 220ms;
+  }
+
+  .dashboard > :nth-child(3) > .panel {
+    animation-delay: 300ms;
+  }
+
+  .dashboard > :nth-child(4) > .panel {
+    animation-delay: 380ms;
+  }
+
+  .ledger__item--lead::after {
+    animation: sheen 1400ms ease-in-out 500ms forwards;
+  }
+
+  .ledger__item:not(.ledger__item--lead),
+  .grid > .panel {
+    transition:
+      transform 200ms ease,
+      box-shadow 200ms ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-2);
+    }
+  }
+}
+
 @media (max-width: 1100px) {
   .ledger {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -190,6 +268,7 @@
     gap: 0.75rem;
   }
 
+  // Income and Expenses side by side; Savings rate takes the full row.
   .ledger__item:nth-child(4) {
     grid-column: 1 / -1;
   }

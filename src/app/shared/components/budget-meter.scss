@@ -13,16 +13,17 @@
 .meter__fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--ok);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ok) 65%, var(--surface)), var(--ok));
+  transform-origin: left center;
   transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .meter[data-tone='warn'] .meter__fill {
-  background: var(--warn);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--warn) 65%, var(--surface)), var(--warn));
 }
 
 .meter[data-tone='danger'] .meter__fill {
-  background: var(--danger);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--danger) 65%, var(--surface)), var(--danger));
 }
 
 .meter[data-tone='neutral'] .meter__fill {
@@ -37,6 +38,18 @@
   left: 75%;
   width: 2px;
   background: var(--surface);
+}
+
+@keyframes meter-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .meter__fill {
+    animation: meter-grow 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 250ms backwards;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
