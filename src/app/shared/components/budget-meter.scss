@@ -11,6 +11,8 @@
 }
 
 .meter__fill {
+  position: relative;
+  z-index: 1;
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, color-mix(in srgb, var(--ok) 65%, var(--surface)), var(--ok));
@@ -30,14 +32,16 @@
   background: var(--text-subtle);
 }
 
-// Marks the 75% "near limit" line.
+// Marks the 75% "near limit" line on the empty part of the track only;
+// the fill covers it, so it never cuts a notch into a coloured bar.
 .meter__tick {
   position: absolute;
+  z-index: 0;
   top: 0;
   bottom: 0;
   left: 75%;
   width: 2px;
-  background: var(--surface);
+  background: var(--border-strong);
 }
 
 @keyframes meter-grow {

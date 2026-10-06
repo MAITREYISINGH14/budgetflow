@@ -179,3 +179,65 @@ tr[data-type='INCOME'] .type-tag {
     }
   }
 }
+
+th {
+  padding-block: 0.625rem;
+  background: var(--surface-sunken);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+td {
+  padding-block: 0.6875rem;
+}
+
+.cell-date {
+  font-size: 0.8125rem;
+  color: var(--text-subtle);
+}
+
+.category-chip {
+  display: inline-block;
+  padding: 0.1875rem 0.625rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.type-tag {
+  padding: 0.1875rem 0.625rem 0.1875rem 0.4375rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  .material-symbols-outlined {
+    font-size: 0.875rem;
+  }
+}
+
+tr[data-type='INCOME'] .type-tag {
+  background: var(--ok-soft);
+  color: var(--income);
+}
+
+@media (hover: hover) and (min-width: 721px) {
+  .cell-actions .icon-btn {
+    opacity: 0;
+    transition:
+      opacity 150ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  tbody tr:hover .cell-actions .icon-btn,
+  .cell-actions:focus-within .icon-btn {
+    opacity: 1;
+  }
+}

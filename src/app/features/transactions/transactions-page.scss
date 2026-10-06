@@ -115,3 +115,11 @@
     }
   }
 }
+
+.filters__clear .btn:disabled {
+  visibility: hidden;
+}
+
+.filters__clear .btn:not(:disabled) {
+  color: var(--primary);
+}

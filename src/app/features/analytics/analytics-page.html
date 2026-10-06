@@ -180,7 +180,17 @@
                     {{ item.name }}
                   </td>
                   <td class="num">{{ item.total | money }}</td>
-                  <td class="num">{{ item.percentage }}%</td>
+                  <td class="num share-cell">
+                    <div class="share-cell__inner">
+                      <span class="share-cell__bar" aria-hidden="true">
+                        <span
+                          [style.width.%]="(item.percentage / categories()[0].percentage) * 100"
+                          [style.background]="item.color"
+                        ></span>
+                      </span>
+                      <span class="share-cell__value">{{ item.percentage }}%</span>
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>

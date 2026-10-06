@@ -1,9 +1,13 @@
 /*
+ * BudgetFlow themes
  * Light = "Cobalt": white surfaces, cobalt blue actions.
  * Dark  = "Midnight": deep navy surfaces, periwinkle actions.
+ * Components only use these variables, so switching data-theme on <html>
+ * restyles the whole app (SettingsService sets it).
  */
 :root {
-  --font-sans: 'Schibsted Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  // One typeface for both themes, so text doesn't reflow when the theme changes.
+  --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --paper: #f4f6fa;
   --surface: #ffffff;
@@ -32,6 +36,8 @@
     linear-gradient(135deg, #1b3fd8 0%, #2350f5 45%, #5b7cff 100%);
   --primary-gradient: linear-gradient(135deg, #2350f5 0%, #4a6bff 100%);
   --page-glow: radial-gradient(70rem 32rem at 85% -12%, rgb(35 80 245 / 9%), transparent 70%);
+
+  // Gradient stat tiles: one colour per meaning, white text on all of them.
   --tile-text: #ffffff;
   --tile-label: rgb(255 255 255 / 82%);
   --tile-border: transparent;
@@ -41,6 +47,14 @@
   --tile-savings: var(--tile-glow), linear-gradient(135deg, #4527c0 0%, #6448ef 50%, #8a74ff 100%);
   --tile-spent: var(--tile-glow), linear-gradient(135deg, #8a4700 0%, #b0620a 50%, #cf7f17 100%);
   --tile-average: var(--tile-glow), linear-gradient(135deg, #04586a 0%, #0a7b8f 50%, #149bb0 100%);
+
+  // Light mode: each tile casts a soft shadow in its own colour.
+  --tile-shadow-hero: 0 18px 36px -20px rgb(35 80 245 / 55%);
+  --tile-shadow-income: 0 18px 36px -20px rgb(10 127 86 / 55%);
+  --tile-shadow-expense: 0 18px 36px -20px rgb(199 48 59 / 50%);
+  --tile-shadow-savings: 0 18px 36px -20px rgb(100 72 239 / 50%);
+  --tile-shadow-spent: 0 18px 36px -20px rgb(176 98 10 / 50%);
+  --tile-shadow-average: 0 18px 36px -20px rgb(10 123 143 / 50%);
 
   --sidebar-bg: #ffffff;
   --sidebar-border: #e1e7f0;
@@ -72,7 +86,9 @@
   --chart-5: #d93a40;
   --chart-6: #8e6cf0;
   --chart-7: #1aa3c4;
-  --chart-8: #b7c3d9;
+  --chart-8: #64748b;
+  --chart-9: #e0679b;
+  --chart-10: #f08a3c;
   --chart-income: #0b8f63;
   --chart-expense: #d93a40;
   --chart-line: #2350f5;
@@ -96,8 +112,6 @@
 }
 
 :root[data-theme='dark'] {
-  --font-sans: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-
   --paper: #0b111c;
   --surface: #121a27;
   --surface-sunken: #1a2434;
@@ -125,6 +139,7 @@
     linear-gradient(135deg, #172036 0%, #1f2b52 55%, #2c3c74 100%);
   --primary-gradient: linear-gradient(135deg, #8fa8ff 0%, #b4c4ff 100%);
   --page-glow: radial-gradient(70rem 32rem at 85% -12%, rgb(143 168 255 / 11%), transparent 70%);
+
   --tile-text: #ffffff;
   --tile-label: rgb(255 255 255 / 74%);
   --tile-border: rgb(255 255 255 / 8%);
@@ -135,7 +150,15 @@
   --tile-spent: var(--tile-glow), linear-gradient(135deg, #33240c 0%, #4f3812 55%, #6e4e1a 100%);
   --tile-average: var(--tile-glow), linear-gradient(135deg, #0c2e35 0%, #12474f 55%, #1a6270 100%);
 
-  --sidebar-bg: #0b111c;
+  // Dark mode: coloured glows look cheap on navy, so tiles use the normal shadow.
+  --tile-shadow-hero: var(--shadow-2);
+  --tile-shadow-income: var(--shadow-2);
+  --tile-shadow-expense: var(--shadow-2);
+  --tile-shadow-savings: var(--shadow-2);
+  --tile-shadow-spent: var(--shadow-2);
+  --tile-shadow-average: var(--shadow-2);
+
+  --sidebar-bg: #0e1522;
   --sidebar-border: #1a2434;
   --nav-text: #a3b0c2;
   --nav-hover-bg: #121a27;
@@ -165,7 +188,9 @@
   --chart-5: #c49bff;
   --chart-6: #5ec8e0;
   --chart-7: #f49ac1;
-  --chart-8: #3a4a63;
+  --chart-8: #a3b0c2;
+  --chart-9: #ffb86b;
+  --chart-10: #9be36d;
   --chart-income: #4fd1a1;
   --chart-expense: #ff8a7a;
   --chart-line: #8fa8ff;
@@ -525,9 +550,9 @@ textarea {
   }
 
   label:has(input:checked) {
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-1);
+    background: var(--primary-soft);
+    color: var(--primary);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 35%, transparent);
   }
 
   label:has(input:focus-visible) {
@@ -602,13 +627,29 @@ fieldset.field {
 }
 
 .panel__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3125rem;
+  padding: 0.3125rem 0.75rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
   font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: 700;
   text-decoration: none;
+  transition: background-color 150ms ease;
+
+  &::after {
+    content: '→';
+    transition: transform 150ms ease;
+  }
 
   &:hover {
-    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
+
+    &::after {
+      transform: translateX(2px);
+    }
   }
 }
 
@@ -618,7 +659,7 @@ fieldset.field {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .page-toolbar__lead {
@@ -848,12 +889,4 @@ fieldset.field {
     color-mix(in srgb, var(--primary) 5%, var(--surface)) 0%,
     var(--surface) 9rem
   );
-}
-
-/* Shared entrance animation for list rows and cards on any page */
-@keyframes bf-rise {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
 }

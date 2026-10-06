@@ -23,6 +23,8 @@ export const CATEGORY_PALETTE = [
   'var(--chart-6)',
   'var(--chart-7)',
   'var(--chart-8)',
+  'var(--chart-9)',
+  'var(--chart-10)',
 ];
 
 export function colorForIndex(index: number): string {
@@ -72,9 +74,11 @@ export function spendingTrendLine(points: MonthlyTrendPoint[], format: Format): 
           backgroundColor: CHART_COLORS.fill,
           borderWidth: 2.5,
           fill: true,
-          tension: 0.35,
+          cubicInterpolationMode: 'monotone',
           pointRadius: 3,
-          pointHoverRadius: 5,
+          pointHoverRadius: 6,
+          pointBorderWidth: 2,
+          pointBorderColor: CHART_COLORS.gap,
           pointBackgroundColor: CHART_COLORS.line,
         },
       ],

@@ -74,10 +74,23 @@
       color: var(--text);
     }
 
+    // Active page: tinted background plus an accent bar on the left edge.
     &.is-active {
+      position: relative;
       background: var(--nav-active-bg);
       color: var(--nav-active-text);
       font-weight: 700;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: -0.875rem;
+        top: 0.625rem;
+        bottom: 0.625rem;
+        width: 3px;
+        border-radius: 0 3px 3px 0;
+        background: var(--primary-gradient);
+      }
 
       .material-symbols-outlined {
         font-variation-settings:
@@ -89,6 +102,7 @@
   }
 }
 
+// Light/dark switch, pinned to the bottom of the side nav.
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -156,16 +170,17 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 2rem 2.5rem 0;
+  padding: 1.75rem 2.5rem 0;
 }
 
 .topbar__title {
   margin: 0;
-  font-size: 1.875rem;
+  font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: -0.025em;
 }
 
+// Phones have no sidebar, so the switch lives in the top bar there.
 .topbar__theme {
   display: none;
   margin-left: auto;

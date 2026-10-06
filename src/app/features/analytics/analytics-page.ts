@@ -48,7 +48,6 @@ export class AnalyticsPage {
     return range ? `${formatDisplayDate(range.startDate)} – ${formatDisplayDate(range.endDate)}` : '';
   });
 
-  /** Falls back to an empty range while a custom range is invalid, so the page keeps its last layout. */
   private readonly rangeTransactions = computed(() => {
     const range = this.range();
     return range ? inRange(this.store.transactions(), range) : [];
@@ -59,13 +58,12 @@ export class AnalyticsPage {
   protected readonly categories = computed(() =>
     this.spending().map((item, index) => ({ ...item, color: colorForIndex(index) })),
   );
-  protected readonly topCategories = computed(() => this.categories().slice(0, 3));
+  protected readonly topCategories = computed(() => this.categories().slice(0, 5));
   private readonly trend = computed(() => {
     const range = this.range();
     return range ? monthlyTrend(this.store.transactions(), range) : [];
   });
 
-  /** Display-only average, rounded to the rupee. */
   protected readonly averageMonthlySpend = computed(() => {
     const months = this.trend().length;
     return months ? Math.round(this.summary().expenses / months) : 0;

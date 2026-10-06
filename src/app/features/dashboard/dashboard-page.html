@@ -81,7 +81,13 @@
         <div class="panel__body">
           @if (categories().length) {
             <div class="category-split">
-              <bf-chart [config]="categoryChart()" [label]="'Spending by category, ' + monthLabel()" [height]="210" />
+              <div class="donut">
+                <bf-chart [config]="categoryChart()" [label]="'Spending by category, ' + monthLabel()" [height]="210" />
+                <div class="donut__center" aria-hidden="true">
+                  <span class="donut__label">Spent</span>
+                  <span class="donut__value figure">{{ summary().expenses | money }}</span>
+                </div>
+              </div>
               <ul class="legend">
                 @for (item of categories(); track item.categoryId) {
                   <li>

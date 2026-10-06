@@ -1,10 +1,22 @@
 .alerts {
   margin-bottom: 1.25rem;
-  padding: 1rem 1.375rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  padding: 0.875rem 1.25rem;
+  // Tinted by the most serious alert: amber for warnings, red if anything is over budget.
+  background: color-mix(in srgb, var(--warn) 7%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--warn) 28%, var(--border));
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
+
+  &:has([data-tone='danger']) {
+    background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+    border-color: color-mix(in srgb, var(--danger) 26%, var(--border));
+  }
+
+  // Two columns on wide screens, so three alerts take two rows instead of three.
+  .notice-list {
+    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+    gap: 0.625rem 2rem;
+  }
 }
 
 // ---------- Totals: three gradient tiles ----------
@@ -46,18 +58,35 @@
 .overview__item:nth-child(1) {
   background: var(--hero-gradient);
   border-color: var(--hero-border);
+  box-shadow: var(--tile-shadow-hero);
 }
 
 .overview__item:nth-child(2) {
   background: var(--tile-spent);
+  box-shadow: var(--tile-shadow-spent);
 }
 
 .overview__item:nth-child(3) {
   background: var(--tile-income);
+  box-shadow: var(--tile-shadow-income);
 }
 
 .overview__item:has(.is-over) {
   background: var(--tile-expense);
+  box-shadow: var(--tile-shadow-expense);
+}
+
+// A faint ring in the corner of each tile, echoing a coin.
+.overview__item::before {
+  content: '';
+  position: absolute;
+  right: -2.75rem;
+  bottom: -2.75rem;
+  width: 8rem;
+  height: 8rem;
+  border: 1.25rem solid rgb(255 255 255 / 7%);
+  border-radius: 50%;
+  pointer-events: none;
 }
 
 .overview__label {
@@ -104,24 +133,20 @@
     position: absolute;
     inset: 0 0 auto;
     height: 3px;
-    background: linear-gradient(90deg, var(--ok), color-mix(in srgb, var(--ok) 25%, transparent));
+    background: linear-gradient(90deg, var(--ok), color-mix(in srgb, var(--ok) 55%, var(--surface)));
   }
 
   &[data-status='NEAR_LIMIT']::before {
-    background: linear-gradient(90deg, var(--warn), color-mix(in srgb, var(--warn) 25%, transparent));
+    background: linear-gradient(90deg, var(--warn), color-mix(in srgb, var(--warn) 55%, var(--surface)));
   }
 
   &[data-status='EXCEEDED']::before {
-    background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 25%, transparent));
+    background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 55%, var(--surface)));
   }
 
   &[data-status='NO_LIMIT']::before {
     background: var(--border-strong);
   }
-}
-
-.budget-card[data-status='EXCEEDED'] {
-  border-color: var(--danger-border);
 }
 
 .budget-card__head {
@@ -171,10 +196,29 @@
 .budget-card__actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.25rem;
-  margin-right: -0.5rem;
-  padding-top: 0.375rem;
-  border-top: 1px solid var(--border-soft);
+  gap: 0.125rem;
+  margin: -0.375rem -0.5rem 0 0;
+
+  .icon-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+// Edit/delete stay subtle until the card is hovered or focused.
+@media (hover: hover) {
+  .budget-card__actions .icon-btn {
+    opacity: 0.55;
+    transition:
+      opacity 150ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .budget-card:hover .budget-card__actions .icon-btn,
+  .budget-card__actions:focus-within .icon-btn {
+    opacity: 1;
+  }
 }
 
 // ---------- Motion ----------
