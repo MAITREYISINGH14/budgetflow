@@ -7,41 +7,74 @@
   box-shadow: var(--shadow-1);
 }
 
+// ---------- Totals: three gradient tiles ----------
+
 .overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.25rem;
+  // The section carries .panel; the tiles inside are the surfaces here.
   background: transparent;
   border: none;
   box-shadow: none;
 }
 
 .overview__item {
+  position: relative;
+  overflow: hidden;
   display: grid;
-  gap: 0.25rem;
-  padding: 1.125rem 1.375rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  align-content: center;
+  gap: 0.375rem;
+  padding: 1.25rem 1.375rem;
+  border: 1px solid var(--tile-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-1);
+  color: var(--tile-text);
+  box-shadow: var(--shadow-2);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 14%) 50%, transparent 70%);
+    transform: translateX(-120%);
+    pointer-events: none;
+  }
+}
+
+// Budgeted = headline (theme colour), Spent = amber, Left to spend = green (red when over).
+.overview__item:nth-child(1) {
+  background: var(--hero-gradient);
+  border-color: var(--hero-border);
+}
+
+.overview__item:nth-child(2) {
+  background: var(--tile-spent);
+}
+
+.overview__item:nth-child(3) {
+  background: var(--tile-income);
+}
+
+.overview__item:has(.is-over) {
+  background: var(--tile-expense);
 }
 
 .overview__label {
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--tile-label);
 }
 
-.overview__value {
-  font-size: 1.5rem;
+.overview__value,
+.overview__value.is-over {
+  font-size: 1.625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-
-  &.is-over {
-    color: var(--danger);
-  }
+  color: var(--tile-text);
 }
+
+// ---------- Budget cards ----------
 
 .budget-grid {
   display: grid;
@@ -50,6 +83,8 @@
 }
 
 .budget-card {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: 0.875rem;
   padding: 1.25rem 1.375rem 0.75rem;
@@ -62,29 +97,26 @@
     border-color: var(--border-strong);
     box-shadow: var(--shadow-2);
   }
-}
 
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  // Budget cards appear one after another.
-  .budget-card {
-    animation: rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-
-    &:hover {
-      transform: translateY(-2px);
-    }
+  // A gradient strip along the top shows the budget's status at a glance.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--ok), color-mix(in srgb, var(--ok) 25%, transparent));
   }
 
-  @for $i from 2 through 9 {
-    .budget-card:nth-child(#{$i}) {
-      animation-delay: #{($i - 1) * 50}ms;
-    }
+  &[data-status='NEAR_LIMIT']::before {
+    background: linear-gradient(90deg, var(--warn), color-mix(in srgb, var(--warn) 25%, transparent));
+  }
+
+  &[data-status='EXCEEDED']::before {
+    background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 25%, transparent));
+  }
+
+  &[data-status='NO_LIMIT']::before {
+    background: var(--border-strong);
   }
 }
 
@@ -145,63 +177,61 @@
   border-top: 1px solid var(--border-soft);
 }
 
-@media (max-width: 600px) {
-  .overview {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.75rem;
+// ---------- Motion ----------
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
 }
 
-.overview__item:nth-child(3) {
-  background: var(--hero-gradient);
-  border-color: var(--hero-border);
-  box-shadow: var(--shadow-2);
-
-  .overview__label {
-    color: var(--hero-label);
-  }
-
-  .overview__value,
-  .overview__value.is-over {
-    color: var(--hero-text);
-  }
-}
-
-.budget-card {
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 3px;
-    background: linear-gradient(90deg, var(--ok), color-mix(in srgb, var(--ok) 25%, transparent));
-  }
-
-  &[data-status='NEAR_LIMIT']::before {
-    background: linear-gradient(90deg, var(--warn), color-mix(in srgb, var(--warn) 25%, transparent));
-  }
-
-  &[data-status='EXCEEDED']::before {
-    background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 25%, transparent));
-  }
-
-  &[data-status='NO_LIMIT']::before {
-    background: var(--border-strong);
+@keyframes sheen {
+  to {
+    transform: translateX(120%);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .overview__item {
+  .overview__item,
+  .budget-card {
     animation: rise 480ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  .overview__item::after {
+    animation: sheen 1400ms ease-in-out 500ms forwards;
   }
 
   .overview__item:nth-child(2) {
     animation-delay: 60ms;
+
+    &::after {
+      animation-delay: 600ms;
+    }
   }
 
   .overview__item:nth-child(3) {
     animation-delay: 120ms;
+
+    &::after {
+      animation-delay: 700ms;
+    }
+  }
+
+  .budget-card:hover {
+    transform: translateY(-2px);
+  }
+
+  @for $i from 1 through 9 {
+    .budget-card:nth-child(#{$i}) {
+      animation-delay: #{150 + ($i - 1) * 50}ms;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .overview {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.75rem;
   }
 }

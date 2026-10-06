@@ -32,6 +32,15 @@
     linear-gradient(135deg, #1b3fd8 0%, #2350f5 45%, #5b7cff 100%);
   --primary-gradient: linear-gradient(135deg, #2350f5 0%, #4a6bff 100%);
   --page-glow: radial-gradient(70rem 32rem at 85% -12%, rgb(35 80 245 / 9%), transparent 70%);
+  --tile-text: #ffffff;
+  --tile-label: rgb(255 255 255 / 82%);
+  --tile-border: transparent;
+  --tile-glow: radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 18%) 0%, transparent 55%);
+  --tile-income: var(--tile-glow), linear-gradient(135deg, #05603f 0%, #0a7f56 50%, #15a06f 100%);
+  --tile-expense: var(--tile-glow), linear-gradient(135deg, #a11d2a 0%, #c7303b 50%, #e0505a 100%);
+  --tile-savings: var(--tile-glow), linear-gradient(135deg, #4527c0 0%, #6448ef 50%, #8a74ff 100%);
+  --tile-spent: var(--tile-glow), linear-gradient(135deg, #8a4700 0%, #b0620a 50%, #cf7f17 100%);
+  --tile-average: var(--tile-glow), linear-gradient(135deg, #04586a 0%, #0a7b8f 50%, #149bb0 100%);
 
   --sidebar-bg: #ffffff;
   --sidebar-border: #e1e7f0;
@@ -116,6 +125,15 @@
     linear-gradient(135deg, #172036 0%, #1f2b52 55%, #2c3c74 100%);
   --primary-gradient: linear-gradient(135deg, #8fa8ff 0%, #b4c4ff 100%);
   --page-glow: radial-gradient(70rem 32rem at 85% -12%, rgb(143 168 255 / 11%), transparent 70%);
+  --tile-text: #ffffff;
+  --tile-label: rgb(255 255 255 / 74%);
+  --tile-border: rgb(255 255 255 / 8%);
+  --tile-glow: radial-gradient(120% 140% at 100% 0%, rgb(255 255 255 / 10%) 0%, transparent 55%);
+  --tile-income: var(--tile-glow), linear-gradient(135deg, #0d2f27 0%, #134a3a 55%, #1b6b51 100%);
+  --tile-expense: var(--tile-glow), linear-gradient(135deg, #35161d 0%, #55212b 55%, #7a2f3a 100%);
+  --tile-savings: var(--tile-glow), linear-gradient(135deg, #221a4d 0%, #33287a 55%, #4a3aa6 100%);
+  --tile-spent: var(--tile-glow), linear-gradient(135deg, #33240c 0%, #4f3812 55%, #6e4e1a 100%);
+  --tile-average: var(--tile-glow), linear-gradient(135deg, #0c2e35 0%, #12474f 55%, #1a6270 100%);
 
   --sidebar-bg: #0b111c;
   --sidebar-border: #1a2434;
