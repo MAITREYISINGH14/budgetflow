@@ -37,7 +37,11 @@ const moneyAxis = (format: Format) => ({
   ticks: { callback: (value: string | number) => format(Number(value), { compact: true }) },
 });
 
-export function categoryDoughnut(items: CategorySpending[], format: Format): ChartConfiguration<'doughnut'> {
+export function categoryDoughnut(
+  items: CategorySpending[],
+  format: Format,
+  colors?: readonly string[],
+): ChartConfiguration<'doughnut'> {
   return {
     type: 'doughnut',
     data: {
@@ -45,7 +49,7 @@ export function categoryDoughnut(items: CategorySpending[], format: Format): Cha
       datasets: [
         {
           data: items.map((i) => i.total),
-          backgroundColor: items.map((_, index) => colorForIndex(index)),
+          backgroundColor: items.map((_, index) => colors?.[index] ?? colorForIndex(index)),
           borderColor: CHART_COLORS.gap,
           borderWidth: 3,
         },

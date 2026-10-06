@@ -13,6 +13,12 @@ interface NavItem {
   icon: string;
 }
 
+interface PageInfo {
+  heading: string;
+  /** The dashboard opens with its own greeting, so it hides the page title. */
+  hideHeading: boolean;
+}
+
 @Component({
   selector: 'bf-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,12 +43,12 @@ export class Shell {
     { path: '/settings', label: 'Settings', icon: 'tune' },
   ];
 
-  protected readonly heading = toSignal(
+  protected readonly page = toSignal(
     this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
-      map(() => this.deepestHeading()),
+      map(() => this.currentPage()),
     ),
-    { initialValue: '' },
+    { initialValue: { heading: '', hideHeading: true } as PageInfo },
   );
 
   constructor() {
@@ -54,9 +60,13 @@ export class Shell {
     this.settings.toggleTheme();
   }
 
-  private deepestHeading(): string {
+  private currentPage(): PageInfo {
     let route = this.route;
     while (route.firstChild) route = route.firstChild;
-    return (route.snapshot.data['heading'] as string | undefined) ?? '';
+    const data = route.snapshot.data;
+    return {
+      heading: (data['heading'] as string | undefined) ?? '',
+      hideHeading: data['hideHeading'] === true,
+    };
   }
 }

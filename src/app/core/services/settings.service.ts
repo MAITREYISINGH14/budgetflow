@@ -114,6 +114,6 @@ export class SettingsService {
     root.setAttribute('data-theme', theme);
     this.document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'dark' ? '#0b111c' : '#f4f6fa');
+      ?.setAttribute('content', theme === 'dark' ? '#0a0c12' : '#f3f4f8');
   }
 }

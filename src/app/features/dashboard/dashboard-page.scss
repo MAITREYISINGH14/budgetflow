@@ -1,270 +1,311 @@
+// ---------- Header: greeting + one sentence, month and main action ----------
+
+.dash-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  margin: 0.5rem 0 1.75rem;
+}
+
+.dash-head__greeting {
+  margin: 0 0 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+// Large and light, with the key number picked out in the accent colour.
+.dash-head__headline {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+
+  strong {
+    font-weight: 700;
+    color: var(--primary);
+  }
+}
+
+.dash-head__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+// The month switcher becomes a pill to match the navigation.
+.month-switcher {
+  border-radius: 999px;
+  background: var(--nav-bg);
+
+  .icon-btn {
+    border-radius: 50%;
+  }
+}
+
+.dash-head__controls .btn {
+  height: 2.75rem;
+  border-radius: 999px;
+  padding: 0 1.25rem 0 1rem;
+}
+
+// ---------- Layout ----------
+
 .dashboard {
   display: grid;
   gap: 1.25rem;
 }
 
-// ---------- Story header: a greeting and one sentence about the month ----------
-
-.story {
-  margin-bottom: 1.5rem;
+.dash-row {
+  display: grid;
+  gap: 1.25rem;
 }
 
-.story__greeting {
-  margin: 0 0 0.25rem;
+.dash-row--summary {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+  min-height: 13rem;
+}
+
+.dash-row--detail {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.dash-row--more {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  align-items: start;
+}
+
+// ---------- Balance: the one bright card ----------
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.625rem 1.875rem;
+  border-radius: var(--radius-lg);
+  background: var(--hero-gradient);
+  color: var(--hero-text);
+  box-shadow: var(--tile-shadow-hero);
+}
+
+.hero__label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.hero__value {
+  font-size: clamp(2.75rem, 4.4vw, 3.875rem);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.hero__note {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 0.875rem;
+  font-weight: 600;
+
+  .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}
+
+// ---------- Income and Expenses: quiet cards ----------
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.5rem 1.625rem;
+  border-radius: var(--radius-lg);
+}
+
+.stat__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.stat__label {
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-muted);
 }
 
-.story__headline {
-  max-width: 46ch;
-  margin: 0;
-  font-size: clamp(1.125rem, 2.2vw, 1.5rem);
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.015em;
+.stat__value {
+  font-size: clamp(1.875rem, 2.6vw, 2.25rem);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
 
-  // The numbers in the sentence pick up the theme's accent gradient.
-  strong {
-    font-weight: 800;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+.stat__note {
+  font-size: 0.8125rem;
+  color: var(--text-subtle);
+}
+
+// Small change pill: green when it's good news, red when it isn't.
+.change {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem 0.25rem 0.4375rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  .material-symbols-outlined {
+    font-size: 0.875rem;
   }
 
-  strong[data-tone='over'] {
-    background: none;
+  &[data-tone='good'] {
+    background: var(--ok-soft);
+    color: var(--income);
+  }
+
+  &[data-tone='bad'] {
+    background: var(--danger-soft);
     color: var(--danger);
   }
 }
 
-// ---------- Summary: four gradient tiles ----------
+// ---------- Cards in the lower rows ----------
 
-.ledger {
-  display: grid;
-  grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
-  gap: 1rem;
-  // The section carries .panel; the tiles inside are the surfaces here.
-  background: transparent;
-  border: none;
-  box-shadow: none;
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+  min-width: 0;
+  padding: 1.5rem 1.625rem;
+  border-radius: var(--radius-lg);
 }
 
-.ledger__item {
-  position: relative;
+// The transactions table runs edge to edge inside its card.
+.card--flush {
+  padding: 1.5rem 0 0.5rem;
   overflow: hidden;
-  display: grid;
-  align-content: center;
-  gap: 0.375rem;
-  padding: 1.25rem 1.375rem;
-  border: 1px solid var(--tile-border);
-  border-radius: var(--radius);
-  color: var(--tile-text);
-  box-shadow: var(--shadow-2);
 
-  // A soft band of light, swept across once when the dashboard appears.
-  &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 14%) 50%, transparent 70%);
-    transform: translateX(-120%);
-    pointer-events: none;
+  .card__head {
+    padding: 0 1.625rem;
   }
 }
 
-// One colour per meaning, each with a matching shadow (coloured in light mode).
-.ledger__item:nth-child(2) {
-  background: var(--tile-income);
-  box-shadow: var(--tile-shadow-income);
+.card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-.ledger__item:nth-child(3) {
-  background: var(--tile-expense);
-  box-shadow: var(--tile-shadow-expense);
+.card__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
 }
 
-.ledger__item:nth-child(4) {
-  background: var(--tile-savings);
-  box-shadow: var(--tile-shadow-savings);
-}
-
-// ---------- Living tiles: sparkline + change chip ----------
-
-// Text sits above the sparkline.
-.ledger__item > :not(.ledger__spark) {
-  position: relative;
-  z-index: 1;
-}
-
-// Six-month trend drawn along the bottom of each tile.
-.ledger__spark {
-  position: absolute;
-  z-index: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 40%;
-  color: var(--tile-text);
-  opacity: 0.5;
-  pointer-events: none;
-  // Fades in from the left, so it never competes with the numbers.
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 45%);
-  mask-image: linear-gradient(to right, transparent 0%, #000 45%);
-}
-
-.ledger__delta {
-  justify-self: start;
-  margin-top: 0.375rem;
-}
-
-.ledger__label,
-.ledger__note {
+.card__link {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--tile-label);
-}
+  color: var(--text-muted);
+  text-decoration: none;
 
-.ledger__note {
-  font-weight: 500;
-}
-
-// Every value is white on its gradient; the tile colour carries the meaning.
-.ledger__value,
-.ledger__value--income,
-.ledger__value.is-negative {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
-  color: var(--tile-text);
-}
-
-.ledger__item--lead {
-  gap: 0.25rem;
-  padding: 1.375rem 1.625rem;
-  background: var(--hero-gradient);
-  border-color: var(--hero-border);
-  box-shadow: var(--tile-shadow-hero);
-
-  &::before {
-    content: '';
-    width: 1.75rem;
-    height: 3px;
-    margin-bottom: 0.5rem;
-    border-radius: 3px;
-    background: var(--hero-accent);
+  .material-symbols-outlined {
+    font-size: 1.125rem;
   }
 
-  .ledger__label,
-  .ledger__note {
-    color: var(--hero-label);
-  }
-
-  .ledger__value {
-    font-size: 2.375rem;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-  }
-
-  // Balance: the change chip sits in the top-right corner, the trend fills the right half.
-  .ledger__delta {
-    position: absolute;
-    top: 1.25rem;
-    right: 1.25rem;
-    margin: 0;
-  }
-
-  .ledger__spark {
-    left: 45%;
-    height: 58%;
-    opacity: 0.6;
+  &:hover {
+    color: var(--text);
   }
 }
 
-// ---------- Panels ----------
+// ---------- Monthly spending: rounded bars, the current month in the accent ----------
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+.bars {
+  display: flex;
+  gap: 0.875rem;
+  // A fixed height gives the bars' percentage heights something definite to measure against.
+  height: 12.5rem;
+  // Sits at the bottom of the card when the row is taller than the chart.
+  margin: auto 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.grid--wide-left {
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  // Both cards share the row's height.
-  align-items: stretch;
-
-  > .panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  // Spending by category: the chart and legend sit in the middle of the card.
-  > .panel:first-child > .panel__body {
-    flex: 1;
-    display: grid;
-    align-content: center;
-  }
-
-  // Insights: capped height with a thin scrollbar; the bottom edge fades instead of cutting a line.
-  > .panel:last-child > .panel__body {
-    max-height: 22rem;
-    overflow-y: auto;
-    padding-bottom: 2rem;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
-    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent);
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent);
-
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      border-radius: 999px;
-      background: var(--border-strong);
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-  }
+.bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
-// Insights read as a list with light dividers, easier to scan than one block.
-.notice-list {
-  gap: 0;
+.bar__track {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
-.notice {
-  padding: 0.75rem 0;
+.bar__fill {
+  display: block;
+  border-radius: 0.875rem;
+  // Quiet in both themes, but clearly visible; only the current month is coloured.
+  background: color-mix(in srgb, var(--text) 9%, var(--surface));
+  transform-origin: bottom;
+}
 
-  & + & {
-    border-top: 1px solid var(--border-soft);
+.bar__value {
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.bar__label {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.bar.is-current {
+  .bar__fill {
+    background: var(--accent-gradient);
   }
 
-  &:first-child {
-    padding-top: 0.25rem;
+  .bar__label {
+    color: var(--text);
   }
 }
 
-.grid--wide-right {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
-}
+// ---------- Where it went: donut with the total, short legend ----------
 
-.category-split {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 28rem);
-  justify-content: center;
-  gap: 2.5rem;
+.split {
+  flex: 1;
+  display: flex;
   align-items: center;
+  gap: 1.125rem;
 }
 
-// The donut shows total spent in its centre.
 .donut {
   position: relative;
+  flex: none;
+  width: 150px;
 }
 
 .donut__center {
@@ -278,42 +319,36 @@
 
 .donut__label {
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-subtle);
+  color: var(--text-muted);
 }
 
 .donut__value {
   font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: -0.03em;
 }
 
 .legend {
+  flex: 1;
   display: grid;
-  gap: 0.125rem;
+  gap: 0.75rem;
+  min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.875rem;
 
   li {
     display: grid;
-    grid-template-columns: 0.625rem minmax(0, 1fr) auto 3rem;
+    grid-template-columns: 0.5rem minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.4375rem 0.625rem;
-    border-radius: var(--radius-sm);
-    transition: background-color 150ms ease;
-
-    &:hover {
-      background: var(--surface-hover);
-    }
+    gap: 0.625rem;
+    font-size: 0.875rem;
   }
 }
 
-.legend__swatch {
-  width: 0.625rem;
-  height: 0.625rem;
+.legend__dot {
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
 }
 
@@ -324,19 +359,19 @@
   color: var(--text-muted);
 }
 
-.legend__value {
+.legend__share {
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-.legend__share {
-  text-align: right;
-  font-size: 0.8125rem;
-  color: var(--text-subtle);
-}
+// ---------- Budgets preview ----------
 
 .budget-list {
-  display: grid;
-  gap: 1.125rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: 1rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -354,8 +389,31 @@
   font-weight: 600;
 }
 
-.muted {
-  color: var(--text-subtle);
+.budget-list__figures {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+
+  strong {
+    color: var(--text);
+  }
+}
+
+// ---------- Insights ----------
+
+.notice-list {
+  gap: 0;
+}
+
+.notice {
+  padding: 0.75rem 0;
+
+  & + & {
+    border-top: 1px solid var(--border-soft);
+  }
+
+  &:first-child {
+    padding-top: 0;
+  }
 }
 
 // ---------- Motion ----------
@@ -367,172 +425,120 @@
   }
 }
 
-@keyframes sheen {
-  to {
-    transform: translateX(120%);
+@keyframes grow {
+  from {
+    transform: scaleY(0);
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  // Tiles and cards appear one after another instead of all at once.
-  .ledger__item,
-  .grid > .panel {
+  // Rows appear one after another; bars grow up from the baseline.
+  .dash-row > * {
     animation: rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 
-  .ledger__item::after {
-    animation: sheen 1400ms ease-in-out 500ms forwards;
-  }
-
-  .ledger__item:nth-child(2) {
+  .dash-row--summary > :nth-child(2) {
     animation-delay: 60ms;
-
-    &::after {
-      animation-delay: 600ms;
-    }
   }
 
-  .ledger__item:nth-child(3) {
+  .dash-row--summary > :nth-child(3) {
     animation-delay: 120ms;
-
-    &::after {
-      animation-delay: 700ms;
-    }
   }
 
-  .ledger__item:nth-child(4) {
+  .dash-row--detail > * {
     animation-delay: 180ms;
-
-    &::after {
-      animation-delay: 800ms;
-    }
   }
 
-  .dashboard > :nth-child(2) > .panel {
-    animation-delay: 220ms;
+  .dash-row--more > * {
+    animation-delay: 260ms;
   }
 
-  .dashboard > :nth-child(3) > .panel {
-    animation-delay: 300ms;
-  }
-
-  .dashboard > :nth-child(4) > .panel {
-    animation-delay: 380ms;
-  }
-
-  .ledger__item {
-    transition: transform 200ms ease;
-
-    &:hover {
-      transform: translateY(-2px);
-    }
-  }
-
-  .grid > .panel {
-    transition:
-      transform 200ms ease,
-      box-shadow 200ms ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-2);
-    }
+  .bar__fill {
+    animation: grow 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 300ms backwards;
   }
 }
+
+// ---------- Smaller screens ----------
 
 @media (max-width: 1100px) {
-  .ledger {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .dash-row--summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .ledger__item--lead {
+  .hero {
     grid-column: 1 / -1;
   }
 
-  .grid,
-  .grid--wide-left,
-  .grid--wide-right {
+  .dash-row--detail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    > :first-child {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .dash-row--more {
     grid-template-columns: minmax(0, 1fr);
   }
 }
 
-// ---------- Mobile ----------
-
 @media (max-width: 600px) {
-  .story {
-    margin-bottom: 1.125rem;
+  .dash-head {
+    margin: 0.25rem 0 1.25rem;
   }
 
-  .story__greeting {
-    font-size: 0.8125rem;
-  }
-
-  // Balance across the top, then Income, Expenses and Savings side by side:
-  // the whole summary fits on the first screen.
-  .ledger {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.625rem;
-  }
-
-  .ledger__item--lead {
-    grid-column: 1 / -1;
-    padding: 1.125rem 1.25rem;
-
-    .ledger__value {
-      font-size: 2rem;
-    }
-
-    .ledger__delta {
-      top: 1rem;
-      right: 1rem;
-    }
-  }
-
-  .ledger__item:not(.ledger__item--lead) {
-    padding: 0.875rem 0.75rem;
-    gap: 0.25rem;
-
-    .ledger__label,
-    .ledger__note {
-      font-size: 0.6875rem;
-    }
-
-    .ledger__value {
-      font-size: clamp(0.875rem, 4vw, 1.125rem);
-      letter-spacing: -0.01em;
-    }
-
-    // Small tiles: no room for the change chip; the sparkline stays as a low strip.
-    .ledger__delta {
-      display: none;
-    }
-
-    .ledger__spark {
-      height: 34%;
-    }
-  }
-
-  // Donut and legend sit closer together.
-  .category-split {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 1rem;
-    justify-items: center;
-  }
-
-  .donut {
-    width: 11.25rem;
-  }
-
-  .legend {
+  .dash-head__controls {
     width: 100%;
   }
 
-  // No scrolling box inside the scrolling page on phones: show every insight.
-  .grid--wide-left > .panel:last-child > .panel__body {
-    max-height: none;
-    overflow: visible;
-    padding-bottom: 1rem;
-    -webkit-mask-image: none;
-    mask-image: none;
+  .dash-row--summary {
+    gap: 0.75rem;
+    min-height: 0;
+  }
+
+  .hero {
+    padding: 1.25rem 1.375rem;
+  }
+
+  .stat {
+    padding: 1rem 1.125rem;
+    gap: 0.5rem;
+  }
+
+  .stat__label {
+    font-size: 0.8125rem;
+  }
+
+  .stat__value {
+    font-size: clamp(1.25rem, 6vw, 1.625rem);
+  }
+
+  .dash-row--detail {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .card--flush {
+    padding: 1.25rem 0 0.5rem;
+
+    .card__head {
+      padding: 0 1.25rem;
+    }
+  }
+
+  .bars {
+    height: 9.5rem;
+  }
+
+  .split {
+    gap: 1rem;
+  }
+
+  .donut {
+    width: 130px;
   }
 }

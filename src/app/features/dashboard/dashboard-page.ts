@@ -4,8 +4,8 @@ import { RouterLink } from '@angular/router';
 import { filter } from 'rxjs';
 import { inRange, monthlyTrend, spendingByCategory, summarize } from '../../core/finance/aggregations';
 import { insightsForMonth } from '../../core/finance/insights';
-import { greetingFor, percentChange, pointChange } from '../../core/finance/month-comparison';
-import { Transaction, YearMonth } from '../../core/models';
+import { greetingFor, MonthChange, percentChange } from '../../core/finance/month-comparison';
+import { CategorySpending, Transaction, YearMonth } from '../../core/models';
 import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
@@ -20,28 +20,34 @@ import {
 } from '../../core/utils/dates';
 import { describeInsight } from '../../core/utils/insight-text';
 import { ChartComponent } from '../../shared/charts/chart';
-import {
-  categoryDoughnut,
-  colorForIndex,
-  incomeExpenseBars,
-  spendingTrendLine,
-} from '../../shared/charts/chart-configs';
+import { categoryDoughnut, colorForIndex } from '../../shared/charts/chart-configs';
 import { BudgetMeter } from '../../shared/components/budget-meter';
 import { CountUp } from '../../shared/components/count-up';
-import { DeltaChip } from '../../shared/components/delta-chip';
-import { Sparkline } from '../../shared/components/sparkline';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { TransactionDialogData, TransactionFormDialog } from '../transactions/transaction-form-dialog';
 
 const TREND_MONTHS = 6;
-const RECENT_COUNT = 8;
+const RECENT_COUNT = 6;
+const TOP_CATEGORIES = 4;
+const BUDGET_PREVIEW = 4;
 
 /** One piece of the dashboard's headline sentence; emphasised parts are the numbers. */
 interface StoryPart {
   text: string;
-  emphasis?: 'value' | 'over';
+  emphasis?: boolean;
+}
+
+/** A month-over-month change plus whether it is good news (e.g. lower spending is good). */
+interface ToneChange extends MonthChange {
+  tone: 'good' | 'bad' | 'neutral';
+}
+
+function withTone(change: MonthChange | null, upIsGood: boolean): ToneChange | null {
+  if (!change) return null;
+  const tone = change.direction === 'flat' ? 'neutral' : (change.direction === 'up') === upIsGood ? 'good' : 'bad';
+  return { ...change, tone };
 }
 
 /**
@@ -52,17 +58,7 @@ interface StoryPart {
 @Component({
   selector: 'bf-dashboard-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    ChartComponent,
-    BudgetMeter,
-    CountUp,
-    DeltaChip,
-    Sparkline,
-    StateMessage,
-    TransactionTable,
-    MoneyPipe,
-  ],
+  imports: [RouterLink, ChartComponent, BudgetMeter, CountUp, StateMessage, TransactionTable, MoneyPipe],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
 })
@@ -79,90 +75,52 @@ export class DashboardPage {
   private readonly format = (value: number, options?: { compact?: boolean }) => this.currency.format(value, options);
 
   private readonly monthTransactions = computed(() => inRange(this.store.transactions(), monthBounds(this.period())));
-
   protected readonly summary = computed(() => summarize(this.monthTransactions()));
-  protected readonly hasIncome = computed(() => this.summary().income > 0);
 
-  // ---------- Story header ----------
+  // ---------- Header: greeting and one sentence ----------
 
   protected readonly greeting = greetingFor(new Date().getHours());
-  protected readonly periodWording = computed(() => (this.isCurrentMonth() ? 'this month' : `in ${this.monthLabel()}`));
+  private readonly periodWording = computed(() => (this.isCurrentMonth() ? 'this month' : `in ${this.monthLabel()}`));
 
-  /** Share of income spent, as a whole percentage; null when there was no income. */
-  protected readonly spentShare = computed(() => {
+  /** "You’ve spent 30% of your income this month." with the number emphasised. */
+  protected readonly story = computed<StoryPart[]>(() => {
     const { income, expenses } = this.summary();
-    return income > 0 ? Math.round((expenses / income) * 100) : null;
+    const highlight = income > 0 ? `${Math.round((expenses / income) * 100)}%` : this.format(expenses);
+    const rest = income > 0 ? ` of your income ${this.periodWording()}.` : ` ${this.periodWording()}.`;
+    return [{ text: 'You’ve spent ' }, { text: highlight, emphasis: true }, { text: rest }];
   });
 
-  /** Total left (positive) or over (negative) across budgets that have a limit; null with no budgets. */
-  protected readonly budgetHeadroom = computed(() => {
-    const limited = this.monthBudgets().filter((b) => b.status !== 'NO_LIMIT');
-    return limited.length ? limited.reduce((sum, b) => sum + b.remaining, 0) : null;
-  });
-
-  /**
-   * The headline sentence as parts, so numbers can be highlighted and spacing stays exact:
-   * "You’ve spent 30% of your income this month, and ₹4,353 is left across your budgets."
-   */
-  protected readonly story = computed(() => {
-    const parts: StoryPart[] = [{ text: 'You’ve spent ' }];
-    const share = this.spentShare();
-    if (share !== null) {
-      parts.push({ text: `${share}%`, emphasis: 'value' }, { text: ` of your income ${this.periodWording()}` });
-    } else {
-      parts.push(
-        { text: this.format(this.summary().expenses), emphasis: 'value' },
-        { text: ` ${this.periodWording()}` },
-      );
-    }
-
-    const headroom = this.budgetHeadroom();
-    if (headroom === null) {
-      parts.push({ text: '.' });
-    } else if (headroom > 0) {
-      parts.push(
-        { text: ', and ' },
-        { text: this.format(headroom), emphasis: 'value' },
-        { text: ' is left across your budgets.' },
-      );
-    } else if (headroom === 0) {
-      parts.push({ text: ', and your budgets are fully used.' });
-    } else {
-      parts.push(
-        { text: ', and you’re ' },
-        { text: this.format(-headroom), emphasis: 'over' },
-        { text: ' over budget overall.' },
-      );
-    }
-    return parts;
-  });
-
-  // ---------- Month-over-month changes ----------
+  // ---------- Comparison with the previous month ----------
 
   private readonly previousPeriod = computed(() => shiftYearMonth(this.period(), -1));
-  protected readonly previousLabel = computed(() => formatMonth(toIsoMonth(this.previousPeriod()), 'short'));
+  protected readonly previousName = computed(() => formatMonth(toIsoMonth(this.previousPeriod()), 'name'));
   private readonly previousSummary = computed(() =>
     summarize(inRange(this.store.transactions(), monthBounds(this.previousPeriod()))),
   );
+  private readonly hasPrevious = computed(() => this.previousSummary().transactionCount > 0);
 
-  /** null when the previous month has no transactions, so no misleading "vs" chips appear. */
-  protected readonly changes = computed(() => {
-    const now = this.summary();
-    const before = this.previousSummary();
-    if (before.transactionCount === 0) return null;
+  /** "₹24,353 more than September"; null when there is nothing to compare with. */
+  protected readonly balanceComparison = computed(() => {
+    if (!this.hasPrevious()) return null;
+    const diff = this.summary().balance - this.previousSummary().balance;
+    if (diff === 0) return { direction: 'flat' as const, text: `Same as ${this.previousName()}` };
     return {
-      balance: percentChange(now.balance, before.balance),
-      income: percentChange(now.income, before.income),
-      expenses: percentChange(now.expenses, before.expenses),
-      savings: before.income > 0 && now.income > 0 ? pointChange(now.savingsRate, before.savingsRate) : null,
+      direction: diff > 0 ? ('up' as const) : ('down' as const),
+      text: `${this.format(Math.abs(diff))} ${diff > 0 ? 'more' : 'less'} than ${this.previousName()}`,
     };
   });
 
-  private readonly spending = computed(() => spendingByCategory(this.monthTransactions()));
-  protected readonly categories = computed(() =>
-    this.spending().map((item, index) => ({ ...item, color: colorForIndex(index) })),
+  protected readonly incomeChange = computed(() =>
+    this.hasPrevious() ? withTone(percentChange(this.summary().income, this.previousSummary().income), true) : null,
   );
-  protected readonly categoryChart = computed(() => categoryDoughnut(this.spending(), this.format));
+  /** Spending less than last month is good news, so "down" is shown in green. */
+  protected readonly expenseChange = computed(() =>
+    this.hasPrevious()
+      ? withTone(percentChange(this.summary().expenses, this.previousSummary().expenses), false)
+      : null,
+  );
+
+  // ---------- Monthly spending bars (last six months) ----------
 
   private readonly trend = computed(() => {
     const period = this.period();
@@ -172,28 +130,63 @@ export class DashboardPage {
     };
     return monthlyTrend(this.store.transactions(), range);
   });
-  protected readonly hasTrend = computed(() => this.trend().some((p) => p.income > 0 || p.expenses > 0));
 
-  // Sparklines: the last six months for each tile.
-  protected readonly sparks = computed(() => {
+  protected readonly spendingBars = computed(() => {
     const points = this.trend();
-    return {
-      net: points.map((p) => p.net),
-      income: points.map((p) => p.income),
-      expenses: points.map((p) => p.expenses),
-      savings: points.map((p) => (p.income > 0 ? (p.net / p.income) * 100 : 0)),
-    };
+    const max = Math.max(...points.map((p) => p.expenses), 1);
+    return points.map((p, index) => ({
+      month: p.month,
+      label: formatMonth(p.month, 'short'),
+      amount: p.expenses,
+      // At least a sliver, so empty months still show where they are.
+      height: Math.max(3, Math.round((p.expenses / max) * 100)),
+      current: index === points.length - 1,
+    }));
   });
-  protected readonly trendChart = computed(() => spendingTrendLine(this.trend(), this.format));
-  protected readonly incomeExpenseChart = computed(() => incomeExpenseBars(this.trend(), this.format));
+
+  // ---------- Where it went: top categories plus "Other" ----------
+
+  private readonly spending = computed(() => spendingByCategory(this.monthTransactions()));
+
+  protected readonly spendingGroups = computed(() => {
+    const all = this.spending();
+    const top = all.slice(0, TOP_CATEGORIES).map((item, index) => ({ ...item, color: colorForIndex(index) }));
+    const rest = all.slice(TOP_CATEGORIES);
+    const groups: (CategorySpending & { color: string })[] = [...top];
+    if (rest.length) {
+      groups.push({
+        categoryId: 'other',
+        name: 'Other',
+        total: rest.reduce((sum, item) => sum + item.total, 0),
+        percentage: Math.round(rest.reduce((sum, item) => sum + item.percentage, 0) * 10) / 10,
+        color: 'var(--chart-8)',
+      });
+    }
+    return groups.map((group) => ({ ...group, share: Math.round(group.percentage) }));
+  });
+
+  protected readonly categoryChart = computed(() => {
+    const groups = this.spendingGroups();
+    return categoryDoughnut(
+      groups,
+      this.format,
+      groups.map((g) => g.color),
+    );
+  });
+
+  // ---------- Budgets preview ----------
 
   private readonly monthBudgets = computed(() => {
     const { year, month } = this.period();
     return this.store.budgetViews().filter((b) => b.year === year && b.month === month);
   });
+  protected readonly budgetCount = computed(() => this.monthBudgets().length);
   protected readonly budgets = computed(() =>
-    [...this.monthBudgets()].sort((a, b) => b.percentageUsed - a.percentageUsed).slice(0, 5),
+    [...this.monthBudgets()].sort((a, b) => b.percentageUsed - a.percentageUsed).slice(0, BUDGET_PREVIEW),
   );
+
+  // ---------- Below the fold: insights and recent activity ----------
+
   protected readonly alerts = computed(() => buildBudgetAlerts(this.monthBudgets(), this.format));
   protected readonly insights = computed(() => {
     const wording = this.isCurrentMonth() ? 'this month' : `in ${this.monthLabel()}`;
@@ -201,7 +194,6 @@ export class DashboardPage {
       describeInsight(insight, this.format, wording),
     );
   });
-
   protected readonly recent = computed(() => this.store.transactionViews().slice(0, RECENT_COUNT));
 
   protected changeMonth(delta: number): void {

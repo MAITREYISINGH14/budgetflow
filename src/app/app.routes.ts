@@ -6,7 +6,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     title: 'Dashboard · BudgetFlow',
-    data: { heading: 'Dashboard' },
+    data: { heading: 'Dashboard', hideHeading: true },
     loadComponent: () => import('./features/dashboard/dashboard-page').then((m) => m.DashboardPage),
   },
   {

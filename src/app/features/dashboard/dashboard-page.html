@@ -1,39 +1,43 @@
-@if (store.status() === 'ready' && store.transactions().length) {
-  <section class="story" aria-label="Month summary">
-    <p class="story__greeting">{{ greeting }}</p>
-    <p class="story__headline">
-      @for (part of story(); track $index) {
-        @if (part.emphasis) {
-          <strong [attr.data-tone]="part.emphasis">{{ part.text }}</strong>
-        } @else {
-          <span>{{ part.text }}</span>
+<div class="dash-head">
+  <div class="dash-head__story">
+    @if (store.status() === 'ready' && store.transactions().length) {
+      <p class="dash-head__greeting">{{ greeting }}</p>
+      <h1 class="dash-head__headline">
+        @for (part of story(); track $index) {
+          @if (part.emphasis) {
+            <strong>{{ part.text }}</strong>
+          } @else {
+            <span>{{ part.text }}</span>
+          }
         }
-      }
-    </p>
-  </section>
-}
-
-<div class="page-toolbar">
-  <div class="month-switcher" role="group" aria-label="Dashboard month">
-    <button type="button" class="icon-btn" (click)="changeMonth(-1)" aria-label="Previous month">
-      <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
-    </button>
-    <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
-    <button
-      type="button"
-      class="icon-btn"
-      (click)="changeMonth(1)"
-      [disabled]="isCurrentMonth()"
-      aria-label="Next month"
-    >
-      <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-    </button>
+      </h1>
+    } @else {
+      <h1 class="dash-head__headline">Dashboard</h1>
+    }
   </div>
-  <div class="page-toolbar__actions">
-    <button type="button" class="btn" (click)="addTransaction()" [disabled]="store.status() !== 'ready'">
-      <span class="material-symbols-outlined" aria-hidden="true">add</span>
-      Add transaction
-    </button>
+
+  <div class="dash-head__controls">
+    <div class="month-switcher" role="group" aria-label="Dashboard month">
+      <button type="button" class="icon-btn" (click)="changeMonth(-1)" aria-label="Previous month">
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+      </button>
+      <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
+      <button
+        type="button"
+        class="icon-btn"
+        (click)="changeMonth(1)"
+        [disabled]="isCurrentMonth()"
+        aria-label="Next month"
+      >
+        <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
+    <div class="page-toolbar__actions">
+      <button type="button" class="btn" (click)="addTransaction()" [disabled]="store.status() !== 'ready'">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        Add transaction
+      </button>
+    </div>
   </div>
 </div>
 
@@ -62,179 +66,184 @@
   </div>
 } @else {
   <div class="dashboard">
-    @if (summary(); as s) {
-      <section class="ledger panel" [attr.aria-label]="'Summary for ' + monthLabel()">
-        <div class="ledger__item ledger__item--lead">
-          <span class="ledger__label">Balance</span>
-          <bf-count-up class="ledger__value figure" [class.is-negative]="s.balance < 0" [value]="s.balance" />
-          <span class="ledger__note">Income minus expenses</span>
-          <bf-delta-chip class="ledger__delta" [change]="changes()?.balance ?? null" [reference]="previousLabel()" />
-          <bf-sparkline class="ledger__spark" [values]="sparks().net" />
-        </div>
-        <div class="ledger__item">
-          <span class="ledger__label">Income</span>
-          <bf-count-up class="ledger__value figure ledger__value--income" [value]="s.income" />
-          <bf-delta-chip class="ledger__delta" [change]="changes()?.income ?? null" [reference]="previousLabel()" />
-          <bf-sparkline class="ledger__spark" [values]="sparks().income" />
-        </div>
-        <div class="ledger__item">
-          <span class="ledger__label">Expenses</span>
-          <bf-count-up class="ledger__value figure" [value]="s.expenses" />
-          <bf-delta-chip class="ledger__delta" [change]="changes()?.expenses ?? null" [reference]="previousLabel()" />
-          <bf-sparkline class="ledger__spark" [values]="sparks().expenses" />
-        </div>
-        <div class="ledger__item">
-          <span class="ledger__label">Savings rate</span>
-          <bf-count-up
-            class="ledger__value figure"
-            [class.is-negative]="s.savingsRate < 0"
-            [value]="s.savingsRate"
-            kind="percent"
-          />
-          @if (!hasIncome()) {
-            <span class="ledger__note">No income recorded</span>
-          }
-          <bf-delta-chip class="ledger__delta" [change]="changes()?.savings ?? null" [reference]="previousLabel()" />
-          <bf-sparkline class="ledger__spark" [values]="sparks().savings" />
-        </div>
+    <!-- Row 1: Balance (the one bright card), then Income and Expenses -->
+    <div class="dash-row dash-row--summary">
+      <section class="hero" aria-label="Balance">
+        <span class="hero__label">Balance</span>
+        <bf-count-up class="hero__value" [value]="summary().balance" />
+        @if (balanceComparison(); as c) {
+          <span class="hero__note">
+            @if (c.direction !== 'flat') {
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'arrow_upward' : 'arrow_downward'
+              }}</span>
+            }
+            {{ c.text }}
+          </span>
+        } @else {
+          <span class="hero__note">Income minus expenses</span>
+        }
       </section>
-    }
 
-    <div class="grid grid--wide-left">
-      <section class="panel" aria-labelledby="category-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="category-title">Spending by category</h2>
-          <a class="panel__link" routerLink="/analytics">Analytics</a>
+      <section class="panel stat" aria-label="Income">
+        <div class="stat__head">
+          <span class="stat__label">Income</span>
+          @if (incomeChange(); as c) {
+            <span class="change" [attr.data-tone]="c.tone">
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+              }}</span>
+              <span class="sr-only">{{
+                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+              }}</span>
+              {{ c.text }}
+            </span>
+          }
         </div>
-        <div class="panel__body">
-          @if (categories().length) {
-            <div class="category-split">
-              <div class="donut">
-                <bf-chart [config]="categoryChart()" [label]="'Spending by category, ' + monthLabel()" [height]="210" />
-                <div class="donut__center" aria-hidden="true">
-                  <span class="donut__label">Spent</span>
-                  <span class="donut__value figure">{{ summary().expenses | money }}</span>
-                </div>
+        <bf-count-up class="stat__value" [value]="summary().income" />
+        <span class="stat__note">{{ incomeChange() ? 'vs ' + previousName() : 'This month' }}</span>
+      </section>
+
+      <section class="panel stat" aria-label="Expenses">
+        <div class="stat__head">
+          <span class="stat__label">Expenses</span>
+          @if (expenseChange(); as c) {
+            <span class="change" [attr.data-tone]="c.tone">
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+              }}</span>
+              <span class="sr-only">{{
+                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+              }}</span>
+              {{ c.text }}
+            </span>
+          }
+        </div>
+        <bf-count-up class="stat__value" [value]="summary().expenses" />
+        <span class="stat__note">{{ expenseChange() ? 'vs ' + previousName() : 'This month' }}</span>
+      </section>
+    </div>
+
+    <!-- Row 2: Monthly spending, where it went, budgets -->
+    <div class="dash-row dash-row--detail">
+      <section class="panel card" aria-labelledby="spending-title">
+        <h2 class="card__title" id="spending-title">Monthly spending</h2>
+        <ul class="bars" aria-label="Spending in each of the last six months">
+          @for (bar of spendingBars(); track bar.month) {
+            <li class="bar" [class.is-current]="bar.current">
+              <span class="bar__track">
+                @if (bar.current) {
+                  <span class="bar__value" aria-hidden="true">{{ bar.amount | money: 'compact' }}</span>
+                }
+                <span class="bar__fill" [style.height.%]="bar.height"></span>
+              </span>
+              <span class="bar__label"
+                >{{ bar.label }}<span class="sr-only">: {{ bar.amount | money }}</span></span
+              >
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="panel card" aria-labelledby="split-title">
+        <h2 class="card__title" id="split-title">Where it went</h2>
+        @if (spendingGroups().length) {
+          <div class="split">
+            <div class="donut">
+              <bf-chart [config]="categoryChart()" [label]="'Spending by category, ' + monthLabel()" [height]="150" />
+              <div class="donut__center" aria-hidden="true">
+                <span class="donut__label">Spent</span>
+                <span class="donut__value">{{ summary().expenses | money }}</span>
               </div>
-              <ul class="legend">
-                @for (item of categories(); track item.categoryId) {
-                  <li>
-                    <span class="legend__swatch" [style.background]="item.color" aria-hidden="true"></span>
-                    <span class="legend__name">{{ item.name }}</span>
-                    <span class="legend__value figure">{{ item.total | money }}</span>
-                    <span class="legend__share figure">{{ item.percentage }}%</span>
-                  </li>
-                }
-              </ul>
             </div>
-          } @else {
-            <bf-state-message [title]="'No spending recorded in ' + monthLabel() + '.'" />
-          }
-        </div>
-      </section>
-
-      <section class="panel" aria-labelledby="insights-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="insights-title">Insights</h2>
-        </div>
-        <div class="panel__body">
-          @if (alerts().length || insights().length) {
-            <ul class="notice-list">
-              @for (alert of alerts(); track alert.budgetId) {
-                @if (alert.tone === 'warn') {
-                  <li class="notice" data-tone="warn">
-                    <span class="material-symbols-outlined" aria-hidden="true">warning</span>
-                    <span>{{ alert.message }}</span>
-                  </li>
-                }
-              }
-              @for (insight of insights(); track $index) {
-                <li class="notice" [attr.data-tone]="insight.tone === 'warn' ? 'danger' : 'ok'">
-                  <span class="material-symbols-outlined" aria-hidden="true">{{ insight.icon }}</span>
-                  <span>{{ insight.message }}</span>
-                </li>
-              }
-            </ul>
-          } @else {
-            <bf-state-message
-              title="Nothing to flag."
-              message="Insights appear once there is enough activity to compare."
-            />
-          }
-        </div>
-      </section>
-    </div>
-
-    <div class="grid">
-      <section class="panel" aria-labelledby="trend-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="trend-title">Monthly spending</h2>
-        </div>
-        <div class="panel__body">
-          @if (hasTrend()) {
-            <bf-chart [config]="trendChart()" label="Expenses over the last six months" [height]="230" />
-          } @else {
-            <bf-state-message title="No activity in the last six months." />
-          }
-        </div>
-      </section>
-
-      <section class="panel" aria-labelledby="income-expense-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="income-expense-title">Income vs expenses</h2>
-        </div>
-        <div class="panel__body">
-          @if (hasTrend()) {
-            <bf-chart
-              [config]="incomeExpenseChart()"
-              label="Income and expenses per month for the last six months"
-              [height]="230"
-            />
-          } @else {
-            <bf-state-message title="No activity in the last six months." />
-          }
-        </div>
-      </section>
-    </div>
-
-    <div class="grid grid--wide-right">
-      <section class="panel" aria-labelledby="budgets-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="budgets-title">Budgets</h2>
-          <a class="panel__link" routerLink="/budgets">Manage</a>
-        </div>
-        <div class="panel__body">
-          @if (budgets().length) {
-            <ul class="budget-list">
-              @for (budget of budgets(); track budget.id) {
+            <ul class="legend">
+              @for (item of spendingGroups(); track item.categoryId) {
                 <li>
-                  <div class="budget-list__row">
-                    <span class="budget-list__name">{{ budget.category.name }}</span>
-                    <span class="budget-list__figures figure">
-                      {{ budget.spent | money }}
-                      @if (budget.status !== 'NO_LIMIT') {
-                        <span class="muted">/ {{ budget.limit | money }}</span>
-                      }
-                    </span>
-                  </div>
-                  <bf-budget-meter
-                    [percentageUsed]="budget.percentageUsed"
-                    [status]="budget.status"
-                    [label]="budget.category.name + ' budget'"
-                  />
+                  <span class="legend__dot" [style.background]="item.color" aria-hidden="true"></span>
+                  <span class="legend__name">{{ item.name }}</span>
+                  <span class="legend__share">{{ item.share }}%</span>
                 </li>
               }
             </ul>
-          } @else {
-            <bf-state-message [title]="'No budgets set for ' + monthLabel() + '.'" />
-          }
-        </div>
+          </div>
+        } @else {
+          <bf-state-message [title]="'No spending recorded in ' + monthLabel() + '.'" />
+        }
       </section>
 
-      <section class="panel" aria-labelledby="recent-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="recent-title">Recent transactions</h2>
-          <a class="panel__link" routerLink="/transactions">View all</a>
+      <section class="panel card" aria-labelledby="budgets-title">
+        <div class="card__head">
+          <h2 class="card__title" id="budgets-title">Budgets</h2>
+          @if (budgetCount()) {
+            <a class="card__link" routerLink="/budgets">
+              See all {{ budgetCount() }}
+              <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+            </a>
+          }
+        </div>
+        @if (budgets().length) {
+          <ul class="budget-list">
+            @for (budget of budgets(); track budget.id) {
+              <li>
+                <div class="budget-list__row">
+                  <span class="budget-list__name">{{ budget.category.name }}</span>
+                  <span class="budget-list__figures">
+                    <strong>{{ budget.spent | money }}</strong>
+                    @if (budget.status !== 'NO_LIMIT') {
+                      / {{ budget.limit | money }}
+                    }
+                  </span>
+                </div>
+                <bf-budget-meter
+                  [percentageUsed]="budget.percentageUsed"
+                  [status]="budget.status"
+                  [label]="budget.category.name + ' budget'"
+                />
+              </li>
+            }
+          </ul>
+        } @else {
+          <bf-state-message [title]="'No budgets set for ' + monthLabel() + '.'" />
+        }
+      </section>
+    </div>
+
+    <!-- Row 3 (below the fold): insights and recent activity -->
+    <div class="dash-row dash-row--more">
+      <section class="panel card" aria-labelledby="insights-title">
+        <h2 class="card__title" id="insights-title">Insights</h2>
+        @if (alerts().length || insights().length) {
+          <ul class="notice-list">
+            @for (alert of alerts(); track alert.budgetId) {
+              @if (alert.tone === 'warn') {
+                <li class="notice" data-tone="warn">
+                  <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                  <span>{{ alert.message }}</span>
+                </li>
+              }
+            }
+            @for (insight of insights(); track $index) {
+              <li class="notice" [attr.data-tone]="insight.tone === 'warn' ? 'danger' : 'ok'">
+                <span class="material-symbols-outlined" aria-hidden="true">{{ insight.icon }}</span>
+                <span>{{ insight.message }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <bf-state-message
+            title="Nothing to flag."
+            message="Insights appear once there is enough activity to compare."
+          />
+        }
+      </section>
+
+      <section class="panel card card--flush" aria-labelledby="recent-title">
+        <div class="card__head">
+          <h2 class="card__title" id="recent-title">Recent transactions</h2>
+          <a class="card__link" routerLink="/transactions">
+            See all
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </a>
         </div>
         @if (recent().length) {
           <bf-transaction-table [transactions]="recent()" caption="Most recent transactions" [compact]="true" />

@@ -88,11 +88,12 @@ export function resolveDateRange(
 
 const monthFormatters = {
   short: new Intl.DateTimeFormat('en-IN', { month: 'short', timeZone: 'UTC' }),
+  name: new Intl.DateTimeFormat('en-IN', { month: 'long', timeZone: 'UTC' }),
   shortYear: new Intl.DateTimeFormat('en-IN', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
   long: new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
 };
 
-/** "2026-05" -> "May 2026" (long), "May" (short) or "May 26" (shortYear). */
+/** "2026-05" -> "May 2026" (long), "May" (short or name; name is the full month, e.g. "September") or "May 26" (shortYear). */
 export function formatMonth(isoMonth: string, style: keyof typeof monthFormatters = 'long'): string {
   return monthFormatters[style].format(new Date(`${isoMonth}-01T00:00:00Z`));
 }
