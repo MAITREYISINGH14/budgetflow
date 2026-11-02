@@ -16,7 +16,12 @@
       }
     </div>
   </fieldset>
-  <p class="page-toolbar__lead">{{ rangeLabel() }}</p>
+  <p class="page-toolbar__lead">
+    {{ rangeLabel() }}
+    @if (hasPrevious()) {
+      <span class="compare-note">compared with {{ previousLabel() }}</span>
+    }
+  </p>
 </div>
 
 @if (option() === 'custom') {
@@ -27,7 +32,7 @@
         id="analytics-from"
         class="input"
         type="date"
-        [max]="today"
+        [max]="today()"
         [value]="customFrom()"
         (change)="customFrom.set(inputValue($event))"
       />
@@ -38,7 +43,7 @@
         id="analytics-to"
         class="input"
         type="date"
-        [max]="today"
+        [max]="today()"
         [value]="customTo()"
         (change)="customTo.set(inputValue($event))"
       />
@@ -66,18 +71,51 @@
 } @else {
   <div class="analytics">
     @if (summary(); as s) {
-      <section class="panel figures" aria-label="Totals for the selected period">
+      <section class="figures" aria-label="Totals for the selected period">
         <div class="figures__item">
           <span class="figures__label">Income</span>
           <bf-count-up class="figures__value figure figures__value--income" [value]="s.income" />
+          @if (changes()?.income; as c) {
+            <span class="change" [attr.data-tone]="c.tone">
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+              }}</span>
+              <span class="sr-only">{{
+                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+              }}</span>
+              {{ c.text }}
+            </span>
+          }
         </div>
         <div class="figures__item">
           <span class="figures__label">Expenses</span>
           <bf-count-up class="figures__value figure" [value]="s.expenses" />
+          @if (changes()?.expenses; as c) {
+            <span class="change" [attr.data-tone]="c.tone">
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+              }}</span>
+              <span class="sr-only">{{
+                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+              }}</span>
+              {{ c.text }}
+            </span>
+          }
         </div>
         <div class="figures__item">
           <span class="figures__label">Net</span>
           <bf-count-up class="figures__value figure" [class.is-negative]="s.balance < 0" [value]="s.balance" />
+          @if (changes()?.net; as c) {
+            <span class="change change--on-accent" [attr.data-tone]="c.tone">
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+              }}</span>
+              <span class="sr-only">{{
+                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+              }}</span>
+              {{ c.text }}
+            </span>
+          }
         </div>
         <div class="figures__item">
           <span class="figures__label">Savings rate</span>
@@ -87,94 +125,125 @@
             [value]="s.savingsRate"
             kind="percent"
           />
+          @if (changes(); as c) {
+            <span class="figures__note">was {{ c.previousSavingsRate }}%</span>
+          }
         </div>
         <div class="figures__item">
           <span class="figures__label">Average monthly spend</span>
           <bf-count-up class="figures__value figure" [value]="averageMonthlySpend()" />
+          @if (changes()?.average; as c) {
+            <span class="change" [attr.data-tone]="c.tone">
+              <span class="material-symbols-outlined" aria-hidden="true">{{
+                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+              }}</span>
+              <span class="sr-only">{{
+                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+              }}</span>
+              {{ c.text }}
+            </span>
+          }
         </div>
       </section>
     }
 
-    @if (categories().length === 0) {
-      <div class="panel">
-        <bf-state-message title="No expenses in this period." message="Pick a longer period or add transactions." />
-      </div>
-    } @else {
-      <div class="grid grid--split">
-        <section class="panel" aria-labelledby="top-title">
-          <div class="panel__header">
-            <h2 class="panel__title" id="top-title">Top spending categories</h2>
-          </div>
-          <ol class="top-list panel__body">
-            @for (item of topCategories(); track item.categoryId; let rank = $index) {
-              <li>
-                <span class="top-list__rank figure">{{ rank + 1 }}</span>
-                <div class="top-list__main">
-                  <div class="top-list__row">
-                    <span class="top-list__name">{{ item.name }}</span>
-                    <span class="figure">{{ item.total | money }}</span>
-                  </div>
-                  <div class="share" aria-hidden="true">
-                    <div class="share__fill" [style.width.%]="item.percentage" [style.background]="item.color"></div>
-                  </div>
-                  <span class="top-list__share">{{ item.percentage }}% of spending</span>
-                </div>
-              </li>
-            }
-          </ol>
-        </section>
-
-        <section class="panel" aria-labelledby="category-spending-title">
-          <div class="panel__header">
-            <h2 class="panel__title" id="category-spending-title">Spending by category</h2>
-          </div>
-          <div class="panel__body">
-            <bf-chart
-              [config]="categoryChart()"
-              label="Spending by category for the selected period"
-              [height]="categoryChartHeight()"
-            />
-          </div>
-        </section>
-      </div>
-    }
-
-    <div class="grid">
-      <section class="panel" aria-labelledby="analytics-trend-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="analytics-trend-title">Monthly spending trend</h2>
-        </div>
-        <div class="panel__body">
-          <bf-chart [config]="trendChart()" label="Expenses per month in the selected period" [height]="240" />
-        </div>
-      </section>
-
+    <div class="grid grid--split">
       <section class="panel" aria-labelledby="analytics-ie-title">
         <div class="panel__header">
-          <h2 class="panel__title" id="analytics-ie-title">Income vs expenses</h2>
+          <h2 class="panel__title" id="analytics-ie-title">Income vs expenses by month</h2>
         </div>
         <div class="panel__body">
           <bf-chart
             [config]="incomeExpenseChart()"
             label="Income and expenses per month in the selected period"
-            [height]="240"
+            [height]="260"
           />
+        </div>
+      </section>
+
+      <section class="panel review" aria-labelledby="review-title">
+        <div class="panel__header">
+          <h2 class="panel__title" id="review-title">Month in review</h2>
+        </div>
+        <div class="panel__body review__body">
+          <div class="field">
+            <label class="field__label" for="review-month">Month</label>
+            <select id="review-month" class="select" (change)="selectReviewMonth($event)">
+              @for (opt of reviewOptions(); track opt.value) {
+                <option [value]="opt.value" [selected]="opt.value === reviewValue()">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+
+          @if (review(); as r) {
+            @if (r.summary.transactionCount === 0) {
+              <p class="review__empty">Nothing was recorded in {{ reviewName() }}.</p>
+            } @else {
+              <dl class="review__figures">
+                <div>
+                  <dt>Income</dt>
+                  <dd class="figure">{{ r.summary.income | money }}</dd>
+                </div>
+                <div>
+                  <dt>Spent</dt>
+                  <dd class="figure">{{ r.summary.expenses | money }}</dd>
+                </div>
+                <div>
+                  <dt>Saved</dt>
+                  <dd class="figure">{{ r.summary.savingsRate }}%</dd>
+                </div>
+              </dl>
+
+              <ul class="notice-list">
+                @if (r.budgetCount === 0) {
+                  <li class="notice" data-tone="warn">
+                    <span class="material-symbols-outlined" aria-hidden="true">donut_small</span>
+                    <span>No budgets were set for {{ reviewName() }}.</span>
+                  </li>
+                } @else {
+                  @for (item of r.over; track item.id) {
+                    <li class="notice" data-tone="danger">
+                      <span class="material-symbols-outlined" aria-hidden="true">error</span>
+                      <span
+                        >{{ item.name }} went {{ item.over | money }} over its {{ item.limit | money }} budget.</span
+                      >
+                    </li>
+                  }
+                  <li class="notice" data-tone="ok">
+                    <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+                    <span>{{ r.withinCount }} of {{ r.budgetCount }} budgets stayed within their limit.</span>
+                  </li>
+                }
+              </ul>
+            }
+            <a class="review__link" routerLink="/budgets" [queryParams]="{ month: reviewValue() }"
+              >Open {{ reviewName() }}’s budgets</a
+            >
+          }
         </div>
       </section>
     </div>
 
-    @if (categories().length) {
-      <section class="panel" aria-labelledby="breakdown-title">
-        <div class="panel__header">
-          <h2 class="panel__title" id="breakdown-title">Category breakdown</h2>
-        </div>
+    <section class="panel" aria-labelledby="breakdown-title">
+      <div class="panel__header">
+        <h2 class="panel__title" id="breakdown-title">Categories</h2>
+      </div>
+      @if (categories().length === 0) {
+        <bf-state-message title="No expenses in this period." message="Pick a longer period or add transactions." />
+      } @else {
         <div class="table-scroll">
           <table class="breakdown">
+            <caption class="sr-only">
+              Spending by category for the selected period
+            </caption>
             <thead>
               <tr>
                 <th scope="col">Category</th>
                 <th scope="col" class="num">Spent</th>
                 <th scope="col" class="num">Share</th>
+                @if (hasPrevious()) {
+                  <th scope="col" class="num">vs previous</th>
+                }
               </tr>
             </thead>
             <tbody>
@@ -182,26 +251,43 @@
                 <tr>
                   <td>
                     <span class="swatch" [style.background]="item.color" aria-hidden="true"></span>
-                    {{ item.name }}
+                    <a class="breakdown__link" routerLink="/transactions" [queryParams]="item.link">{{ item.name }}</a>
                   </td>
                   <td class="num">{{ item.total | money }}</td>
                   <td class="num share-cell">
                     <div class="share-cell__inner">
                       <span class="share-cell__bar" aria-hidden="true">
                         <span
-                          [style.width.%]="(item.percentage / categories()[0].percentage) * 100"
+                          [style.width.%]="(item.percentage / maxShare()) * 100"
                           [style.background]="item.color"
                         ></span>
                       </span>
                       <span class="share-cell__value">{{ item.percentage }}%</span>
                     </div>
                   </td>
+                  @if (hasPrevious()) {
+                    <td class="num">
+                      @if (item.tone; as c) {
+                        <span class="change" [attr.data-tone]="c.tone">
+                          <span class="material-symbols-outlined" aria-hidden="true">{{
+                            c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
+                          }}</span>
+                          <span class="sr-only">{{
+                            c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
+                          }}</span>
+                          {{ c.text }}
+                        </span>
+                      } @else {
+                        <span class="muted">New</span>
+                      }
+                    </td>
+                  }
                 </tr>
               }
             </tbody>
           </table>
         </div>
-      </section>
-    }
+      }
+    </section>
   </div>
 }

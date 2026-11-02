@@ -4,10 +4,19 @@ import { findCategory } from '../categories';
 import { MOCKAPI_RECORD_LIMIT } from '../config';
 import { BudgetApi } from '../data/budget-api';
 import { TransactionApi } from '../data/transaction-api';
+import { budgetsToCopy } from '../finance/budget-copy';
 import { calculateBudgetUsage } from '../finance/budget-usage';
 import { buildDemoData } from '../finance/demo-data';
 import { ApiError, errorMessage } from '../interceptors/api-error.interceptor';
-import { Budget, BudgetPayload, BudgetView, Transaction, TransactionPayload, TransactionView } from '../models';
+import {
+  Budget,
+  BudgetPayload,
+  BudgetView,
+  Transaction,
+  TransactionPayload,
+  TransactionView,
+  YearMonth,
+} from '../models';
 import { formatMonth, todayIso, toIsoMonth } from '../utils/dates';
 import { toPaise } from '../utils/money';
 
@@ -161,6 +170,33 @@ export class FinanceStore {
 
   deleteBudget(id: string): Observable<void> {
     return this.budgetApi.delete(id).pipe(tap(() => this.budgetList.update((list) => list.filter((b) => b.id !== id))));
+  }
+
+  /** Budgets `copyBudgets(from, to)` would create; empty when there is nothing to copy. */
+  budgetsToCopy(from: YearMonth, to: YearMonth): BudgetPayload[] {
+    return budgetsToCopy(this.budgetList(), from, to);
+  }
+
+  /**
+   * Copies `from`'s budgets into `to`, skipping categories `to` already has.
+   * Emits the number of budgets created so far, like the other bulk operations.
+   */
+  copyBudgets(from: YearMonth, to: YearMonth): Observable<number> {
+    const payloads = this.budgetsToCopy(from, to);
+    if (this.budgetList().length + payloads.length > MOCKAPI_RECORD_LIMIT) {
+      return throwError(
+        () =>
+          new ApiError(
+            422,
+            `Copying would pass MockAPI's limit of ${MOCKAPI_RECORD_LIMIT} budgets. Delete some old budgets first.`,
+          ),
+      );
+    }
+    return this.runBulk(
+      payloads.map((payload) =>
+        this.budgetApi.create(payload).pipe(tap((b) => this.budgetList.update((list) => [...list, b]))),
+      ),
+    );
   }
 
   // ---------- Bulk operations (Settings page) ----------

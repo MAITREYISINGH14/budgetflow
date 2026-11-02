@@ -1,5 +1,12 @@
 import { Transaction } from '../models';
-import { inRange, monthlyTrend, savingsRate, spendingByCategory, summarize } from './aggregations';
+import {
+  compareCategorySpending,
+  inRange,
+  monthlyTrend,
+  savingsRate,
+  spendingByCategory,
+  summarize,
+} from './aggregations';
 
 let nextId = 1;
 function tx(type: Transaction['type'], amount: number, categoryId: string, date: string): Transaction {
@@ -83,6 +90,32 @@ describe('monthlyTrend', () => {
       '2025-11',
       '2025-12',
       '2026-01',
+    ]);
+  });
+});
+
+describe('compareCategorySpending', () => {
+  it('adds each category’s change from the previous period', () => {
+    const current = [tx('EXPENSE', 22000, 'food', '2026-10-05'), tx('EXPENSE', 1800, 'other-expense', '2026-10-06')];
+    const previous = [tx('EXPENSE', 25300, 'food', '2026-07-05'), tx('EXPENSE', 9000, 'travel', '2026-07-06')];
+
+    expect(compareCategorySpending(current, previous)).toEqual([
+      {
+        categoryId: 'food',
+        name: 'Food',
+        total: 22000,
+        percentage: 92.4,
+        previous: 25300,
+        change: { direction: 'down', text: '13%' },
+      },
+      {
+        categoryId: 'other-expense',
+        name: 'Other',
+        total: 1800,
+        percentage: 7.6,
+        previous: 0,
+        change: null,
+      },
     ]);
   });
 });

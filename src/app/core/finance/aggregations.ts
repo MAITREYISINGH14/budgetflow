@@ -1,5 +1,6 @@
 import { CategorySpending, DateRange, FinancialSummary, MonthlyTrendPoint, Transaction } from '../models';
 import { findCategory } from '../categories';
+import { MonthChange, percentChange } from './month-comparison';
 import { shiftYearMonth, toIsoMonth, yearMonthOf } from '../utils/dates';
 import { toPaise } from '../utils/money';
 
@@ -89,4 +90,22 @@ export function monthlyTrend(transactions: readonly Transaction[], range: DateRa
     expenses: b.expenses / 100,
     net: (b.income - b.expenses) / 100,
   }));
+}
+
+export interface CategoryComparison extends CategorySpending {
+  previous: number;
+  /** Change from the previous period; null when the category had no spending then. */
+  change: MonthChange | null;
+}
+
+/** Spending by category for a period, each with its change from the period before. */
+export function compareCategorySpending(
+  current: readonly Transaction[],
+  previous: readonly Transaction[],
+): CategoryComparison[] {
+  const before = expenseTotalsByCategory(previous);
+  return spendingByCategory(current).map((item) => {
+    const previousTotal = before.get(item.categoryId) ?? 0;
+    return { ...item, previous: previousTotal, change: percentChange(item.total, previousTotal) };
+  });
 }

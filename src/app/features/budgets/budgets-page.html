@@ -16,6 +16,11 @@
   </div>
 
   <div class="page-toolbar__actions">
+    @if (store.status() === 'ready' && budgets().length && copyCandidates().length) {
+      <button type="button" class="btn btn--secondary" (click)="copyFromPreviousMonth()" [disabled]="copying()">
+        {{ copying() ? 'Copying…' : 'Copy ' + copyCandidates().length + ' from ' + previousName() }}
+      </button>
+    }
     <button
       type="button"
       class="btn"
@@ -46,32 +51,28 @@
     <bf-state-message kind="loading" title="Loading budgets…" />
   </div>
 } @else if (budgets().length === 0) {
-  <div class="panel">
-    <bf-state-message
-      [title]="'No budgets for ' + monthLabel() + '.'"
-      message="Set a monthly limit for a category to see how your spending compares."
-      actionLabel="Add budget"
-      (action)="openForm()"
-    />
-  </div>
+  <section class="panel empty-month" aria-labelledby="empty-title">
+    <h2 class="empty-month__title" id="empty-title">{{ monthLabel() }} has no budgets yet</h2>
+    @if (copyCandidates().length) {
+      <p class="empty-month__text">
+        Start from {{ previousName() }}’s {{ copyCandidates().length }}
+        {{ copyCandidates().length === 1 ? 'budget' : 'budgets' }} and adjust any limit afterwards.
+      </p>
+      <div class="empty-month__actions">
+        <button type="button" class="btn" (click)="copyFromPreviousMonth()" [disabled]="copying()">
+          {{ copying() ? 'Copying…' : 'Copy ' + previousName() + '’s budgets' }}
+        </button>
+        <button type="button" class="btn btn--secondary" (click)="openForm()">Start from scratch</button>
+      </div>
+    } @else {
+      <p class="empty-month__text">Set a monthly limit for a category to see how your spending compares.</p>
+      <div class="empty-month__actions">
+        <button type="button" class="btn" (click)="openForm()">Add budget</button>
+      </div>
+    }
+  </section>
 } @else {
-  @if (alerts().length) {
-    <section class="alerts" aria-labelledby="alerts-title">
-      <h2 id="alerts-title" class="sr-only">Budget alerts</h2>
-      <ul class="notice-list">
-        @for (alert of alerts(); track alert.budgetId) {
-          <li class="notice" [attr.data-tone]="alert.tone">
-            <span class="material-symbols-outlined" aria-hidden="true">{{
-              alert.tone === 'danger' ? 'error' : 'warning'
-            }}</span>
-            <span>{{ alert.message }}</span>
-          </li>
-        }
-      </ul>
-    </section>
-  }
-
-  <section class="panel overview" aria-label="Month totals">
+  <section class="overview" aria-label="Month totals">
     <div class="overview__item">
       <span class="overview__label">Budgeted</span>
       <bf-count-up class="overview__value figure" [value]="totals().limit" />
@@ -84,6 +85,12 @@
       <span class="overview__label">{{ totals().isOver ? 'Over across budgets' : 'Left to spend' }}</span>
       <bf-count-up class="overview__value figure" [class.is-over]="totals().isOver" [value]="totals().leftAmount" />
     </div>
+    @if (perDay(); as day) {
+      <div class="overview__item">
+        <span class="overview__label">Per day, {{ day.days === 1 ? 'today only' : day.days + ' days left' }}</span>
+        <span class="overview__value figure">{{ day.amount | money }}</span>
+      </div>
+    }
   </section>
 
   <section class="budget-grid" aria-label="Budgets">
@@ -119,6 +126,12 @@
           <span [class.is-over]="card.budget.remaining < 0">{{ card.remainingText }}</span>
         </div>
 
+        @if (card.showLink) {
+          <a class="budget-card__link" routerLink="/transactions" [queryParams]="card.linkParams"
+            >See {{ card.budget.category.name }} transactions</a
+          >
+        }
+
         <div class="budget-card__actions">
           <button
             type="button"
@@ -140,4 +153,25 @@
       </article>
     }
   </section>
+
+  @if (availableCategories().length) {
+    <section class="unbudgeted" aria-labelledby="unbudgeted-title">
+      <h2 class="unbudgeted__title" id="unbudgeted-title">No budget yet</h2>
+      <ul class="unbudgeted__list">
+        @for (category of availableCategories(); track category.id) {
+          <li>
+            <button
+              type="button"
+              class="chip-btn"
+              (click)="openForm(undefined, category)"
+              [attr.aria-label]="'Add a ' + category.name + ' budget'"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">add</span>
+              {{ category.name }}
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
 }

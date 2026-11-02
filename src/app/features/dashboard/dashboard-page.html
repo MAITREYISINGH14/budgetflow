@@ -1,44 +1,14 @@
 <div class="dash-head">
-  <div class="dash-head__story">
-    @if (store.status() === 'ready' && store.transactions().length) {
-      <p class="dash-head__greeting">{{ greeting }}</p>
-      <h1 class="dash-head__headline">
-        @for (part of story(); track $index) {
-          @if (part.emphasis) {
-            <strong>{{ part.text }}</strong>
-          } @else {
-            <span>{{ part.text }}</span>
-          }
-        }
-      </h1>
-    } @else {
-      <h1 class="dash-head__headline">Dashboard</h1>
+  <div>
+    <h1 class="dash-head__title">{{ monthLabel() }}</h1>
+    @if (store.status() === 'ready') {
+      <p class="dash-head__day">Day {{ pace().dayOfMonth }} of {{ pace().daysInMonth }}</p>
     }
   </div>
-
-  <div class="dash-head__controls">
-    <div class="month-switcher" role="group" aria-label="Dashboard month">
-      <button type="button" class="icon-btn" (click)="changeMonth(-1)" aria-label="Previous month">
-        <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
-      </button>
-      <span class="month-switcher__label" aria-live="polite">{{ monthLabel() }}</span>
-      <button
-        type="button"
-        class="icon-btn"
-        (click)="changeMonth(1)"
-        [disabled]="isCurrentMonth()"
-        aria-label="Next month"
-      >
-        <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-      </button>
-    </div>
-    <div class="page-toolbar__actions">
-      <button type="button" class="btn" (click)="addTransaction()" [disabled]="store.status() !== 'ready'">
-        <span class="material-symbols-outlined" aria-hidden="true">add</span>
-        Add transaction
-      </button>
-    </div>
-  </div>
+  <button type="button" class="btn dash-head__add" (click)="addTransaction()" [disabled]="store.status() !== 'ready'">
+    <span class="material-symbols-outlined" aria-hidden="true">add</span>
+    Add transaction
+  </button>
 </div>
 
 @if (store.status() === 'error') {
@@ -66,189 +36,145 @@
   </div>
 } @else {
   <div class="dashboard">
-    <!-- Row 1: Balance (the one bright card), then Income and Expenses -->
-    <div class="dash-row dash-row--summary">
-      <section class="hero" aria-label="Balance">
-        <span class="hero__label">Balance</span>
-        <bf-count-up class="hero__value" [value]="summary().balance" />
-        @if (balanceComparison(); as c) {
-          <span class="hero__note">
-            @if (c.direction !== 'flat') {
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'arrow_upward' : 'arrow_downward'
-              }}</span>
-            }
-            {{ c.text }}
-          </span>
-        } @else {
-          <span class="hero__note">Income minus expenses</span>
+    <!-- Row 1: how the month is going, and what needs doing -->
+    <div class="dash-row dash-row--top">
+      <section class="hero" aria-labelledby="hero-label" [attr.data-status]="pace().status">
+        <span class="hero__label" id="hero-label">{{ heroLabel() }}</span>
+        <bf-count-up class="hero__value" [value]="heroValue()" />
+        <span class="hero__note">{{ heroNote() }}</span>
+
+        @if (pace().basis !== 'NONE') {
+          <div class="pace">
+            <div class="pace__labels" aria-hidden="true">
+              <span>{{ pace().usedPercent }}% used</span>
+              <span>{{ pace().elapsedPercent }}% of the month gone</span>
+            </div>
+            <div class="pace__track" aria-hidden="true">
+              <span class="pace__fill" [style.width.%]="paceWidth()"></span>
+              <span class="pace__today" [style.left.%]="pace().elapsedPercent"></span>
+            </div>
+            <p class="sr-only">
+              {{ pace().usedPercent }}% of {{ pace().basis === 'BUDGET' ? 'your budgets' : 'your income' }} used with
+              {{ pace().elapsedPercent }}% of the month gone.
+            </p>
+            <span class="pace__status">{{ paceText() }}</span>
+          </div>
+
+          <dl class="hero__facts">
+            <div>
+              <dt>Spent</dt>
+              <dd>{{ pace().spent | money }}</dd>
+            </div>
+            <div>
+              <dt>{{ pace().basis === 'BUDGET' ? 'Budgeted' : 'Income' }}</dt>
+              <dd>{{ pace().planned | money }}</dd>
+            </div>
+          </dl>
+        }
+        @if (pace().basis !== 'BUDGET') {
+          <a class="hero__link" routerLink="/budgets">Set budgets to plan the month</a>
         }
       </section>
 
-      <section class="panel stat" aria-label="Income">
-        <div class="stat__head">
-          <span class="stat__label">Income</span>
-          @if (incomeChange(); as c) {
-            <span class="change" [attr.data-tone]="c.tone">
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-              }}</span>
-              <span class="sr-only">{{
-                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-              }}</span>
-              {{ c.text }}
-            </span>
-          }
-        </div>
-        <bf-count-up class="stat__value" [value]="summary().income" />
-        <span class="stat__note">{{ incomeChange() ? 'vs ' + previousName() : 'This month' }}</span>
-      </section>
-
-      <section class="panel stat" aria-label="Expenses">
-        <div class="stat__head">
-          <span class="stat__label">Expenses</span>
-          @if (expenseChange(); as c) {
-            <span class="change" [attr.data-tone]="c.tone">
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-              }}</span>
-              <span class="sr-only">{{
-                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-              }}</span>
-              {{ c.text }}
-            </span>
-          }
-        </div>
-        <bf-count-up class="stat__value" [value]="summary().expenses" />
-        <span class="stat__note">{{ expenseChange() ? 'vs ' + previousName() : 'This month' }}</span>
+      <section class="panel card" aria-labelledby="attention-title">
+        <h2 class="card__title" id="attention-title">Needs attention</h2>
+        @if (attention().length) {
+          <ul class="attention">
+            @for (item of attention(); track item.key) {
+              <li class="attention__item" [attr.data-tone]="item.tone">
+                <span class="material-symbols-outlined attention__icon" aria-hidden="true">{{ item.icon }}</span>
+                <span class="attention__text">{{ item.message }}</span>
+                <a
+                  class="attention__action"
+                  [routerLink]="item.action.path"
+                  [queryParams]="item.action.queryParams"
+                  [attr.aria-label]="item.action.label + ': ' + item.message"
+                  >{{ item.action.label }}</a
+                >
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="all-clear">
+            <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
+            <div>
+              <p class="all-clear__title">You’re on track.</p>
+              <p class="all-clear__text">
+                {{ goodNews() ?? 'Nothing is over budget or rising fast this month.' }}
+              </p>
+            </div>
+          </div>
+        }
       </section>
     </div>
 
-    <!-- Row 2: Monthly spending, where it went, budgets -->
-    <div class="dash-row dash-row--detail">
-      <section class="panel card" aria-labelledby="spending-title">
-        <h2 class="card__title" id="spending-title">Monthly spending</h2>
-        <ul class="bars" aria-label="Spending in each of the last six months">
-          @for (bar of spendingBars(); track bar.month) {
-            <li class="bar" [class.is-current]="bar.current">
-              <span class="bar__track">
-                @if (bar.current) {
-                  <span class="bar__value" aria-hidden="true">{{ bar.amount | money: 'compact' }}</span>
-                }
-                <span class="bar__fill" [style.height.%]="bar.height"></span>
-              </span>
-              <span class="bar__label"
-                >{{ bar.label }}<span class="sr-only">: {{ bar.amount | money }}</span></span
-              >
-            </li>
-          }
-        </ul>
-      </section>
-
-      <section class="panel card" aria-labelledby="split-title">
-        <h2 class="card__title" id="split-title">Where it went</h2>
-        @if (spendingGroups().length) {
-          <div class="split">
-            <div class="donut">
-              <bf-chart [config]="categoryChart()" [label]="'Spending by category, ' + monthLabel()" [height]="150" />
-              <div class="donut__center" aria-hidden="true">
-                <span class="donut__label">Spent</span>
-                <span class="donut__value">{{ summary().expenses | money }}</span>
-              </div>
-            </div>
-            <ul class="legend">
-              @for (item of spendingGroups(); track item.categoryId) {
-                <li>
-                  <span class="legend__dot" [style.background]="item.color" aria-hidden="true"></span>
-                  <span class="legend__name">{{ item.name }}</span>
-                  <span class="legend__share">{{ item.share }}%</span>
-                </li>
-              }
-            </ul>
-          </div>
-        } @else {
-          <bf-state-message [title]="'No spending recorded in ' + monthLabel() + '.'" />
-        }
-      </section>
-
-      <section class="panel card" aria-labelledby="budgets-title">
+    <!-- Row 2: where the money went, and the latest activity -->
+    <div class="dash-row dash-row--bottom">
+      <section class="panel card" aria-labelledby="categories-title">
         <div class="card__head">
-          <h2 class="card__title" id="budgets-title">Budgets</h2>
-          @if (budgetCount()) {
-            <a class="card__link" routerLink="/budgets">
-              See all {{ budgetCount() }}
-              <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-            </a>
-          }
+          <h2 class="card__title" id="categories-title">This month by category</h2>
+          <a class="card__link" routerLink="/budgets">
+            Budgets
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </a>
         </div>
-        @if (budgets().length) {
-          <ul class="budget-list">
-            @for (budget of budgets(); track budget.id) {
+
+        @if (categories().length) {
+          <ul class="categories">
+            @for (row of categories(); track row.categoryId) {
               <li>
-                <div class="budget-list__row">
-                  <span class="budget-list__name">{{ budget.category.name }}</span>
-                  <span class="budget-list__figures">
-                    <strong>{{ budget.spent | money }}</strong>
-                    @if (budget.status !== 'NO_LIMIT') {
-                      / {{ budget.limit | money }}
+                <div class="categories__row">
+                  <a
+                    class="categories__name"
+                    routerLink="/transactions"
+                    [queryParams]="{ type: 'EXPENSE', category: row.categoryId, range: 'this-month' }"
+                    >{{ row.name }}</a
+                  >
+                  <span class="categories__figures">
+                    <strong>{{ row.spent | money }}</strong>
+                    @if (row.budget && row.budget.status !== 'NO_LIMIT') {
+                      / {{ row.budget.limit | money }}
+                    } @else if (!row.budget) {
+                      · {{ row.share }}% of spending
                     }
                   </span>
                 </div>
-                <bf-budget-meter
-                  [percentageUsed]="budget.percentageUsed"
-                  [status]="budget.status"
-                  [label]="budget.category.name + ' budget'"
-                />
+                @if (row.budget) {
+                  <bf-budget-meter
+                    [percentageUsed]="row.budget.percentageUsed"
+                    [status]="row.budget.status"
+                    [label]="row.name + ' budget'"
+                  />
+                } @else {
+                  <span class="categories__nobudget">No budget</span>
+                }
               </li>
             }
           </ul>
         } @else {
-          <bf-state-message [title]="'No budgets set for ' + monthLabel() + '.'" />
+          <bf-state-message [title]="'No spending recorded in ' + monthLabel() + ' yet.'" />
         }
-      </section>
-    </div>
 
-    <!-- Row 3 (below the fold): insights and recent activity -->
-    <div class="dash-row dash-row--more">
-      <section class="panel card" aria-labelledby="insights-title">
-        <h2 class="card__title" id="insights-title">Insights</h2>
-        @if (alerts().length || insights().length) {
-          <ul class="notice-list">
-            @for (alert of alerts(); track alert.budgetId) {
-              @if (alert.tone === 'warn') {
-                <li class="notice" data-tone="warn">
-                  <span class="material-symbols-outlined" aria-hidden="true">warning</span>
-                  <span>{{ alert.message }}</span>
-                </li>
-              }
-            }
-            @for (insight of insights(); track $index) {
-              <li class="notice" [attr.data-tone]="insight.tone === 'warn' ? 'danger' : 'ok'">
-                <span class="material-symbols-outlined" aria-hidden="true">{{ insight.icon }}</span>
-                <span>{{ insight.message }}</span>
-              </li>
-            }
-          </ul>
-        } @else {
-          <bf-state-message
-            title="Nothing to flag."
-            message="Insights appear once there is enough activity to compare."
-          />
+        @if (unbudgetedText(); as text) {
+          <p class="categories__footer">
+            <span>{{ text }}</span>
+            <a routerLink="/budgets">Set a budget</a>
+          </p>
         }
       </section>
 
       <section class="panel card card--flush" aria-labelledby="recent-title">
         <div class="card__head">
-          <h2 class="card__title" id="recent-title">Recent transactions</h2>
-          <a class="card__link" routerLink="/transactions">
+          <h2 class="card__title" id="recent-title">Recent in {{ monthLabel() }}</h2>
+          <a class="card__link" routerLink="/transactions" [queryParams]="{ range: 'this-month' }">
             See all
             <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
           </a>
         </div>
         @if (recent().length) {
-          <bf-transaction-table [transactions]="recent()" caption="Most recent transactions" [compact]="true" />
+          <bf-transaction-table [transactions]="recent()" caption="Latest transactions this month" [compact]="true" />
         } @else {
-          <bf-state-message title="No transactions yet." message="Add your first transaction to get started." />
+          <bf-state-message title="Nothing recorded this month yet." message="New transactions show up here." />
         }
       </section>
     </div>

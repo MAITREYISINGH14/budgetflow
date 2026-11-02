@@ -96,16 +96,16 @@
     @if (isCustomRange()) {
       <div class="field">
         <label class="field__label" for="filter-from">From</label>
-        <input id="filter-from" class="input" type="date" formControlName="from" [max]="today" />
+        <input id="filter-from" class="input" type="date" formControlName="from" [max]="today()" />
       </div>
       <div class="field">
         <label class="field__label" for="filter-to">To</label>
-        <input id="filter-to" class="input" type="date" formControlName="to" [max]="today" />
+        <input id="filter-to" class="input" type="date" formControlName="to" [max]="today()" />
       </div>
     }
 
     <div class="field">
-      <label class="field__label" for="filter-min">Min amount</label>
+      <label class="field__label" for="filter-min">Min amount (₹)</label>
       <input
         id="filter-min"
         class="input num"
@@ -118,7 +118,7 @@
     </div>
 
     <div class="field">
-      <label class="field__label" for="filter-max">Max amount</label>
+      <label class="field__label" for="filter-max">Max amount (₹)</label>
       <input id="filter-max" class="input num" type="number" inputmode="decimal" min="0" formControlName="maxAmount" />
     </div>
 
@@ -128,6 +128,24 @@
       </button>
     </div>
   </div>
+
+  @if (chips().length) {
+    <ul class="chips" aria-label="Active filters">
+      @for (chip of chips(); track chip.key) {
+        <li class="chip">
+          <span>{{ chip.label }}</span>
+          <button
+            type="button"
+            class="chip__remove"
+            (click)="removeFilter(chip.key)"
+            [attr.aria-label]="'Remove filter: ' + chip.label"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
 
   @if (filterProblem(); as problem) {
     <p class="field__error filters__problem" role="alert">{{ problem }}</p>
@@ -170,6 +188,11 @@
         (remove)="confirmDelete($event)"
       />
     </div>
+
+    <p class="results__total">
+      <span>{{ total().label }} of {{ page().total }} {{ page().total === 1 ? 'transaction' : 'transactions' }}</span>
+      <strong class="figure">{{ total().sign }}{{ total().amount | money }}</strong>
+    </p>
 
     @if (page().totalPages > 1) {
       <nav class="pager" aria-label="Pagination">

@@ -9,39 +9,20 @@ import {
   viewChild,
 } from '@angular/core';
 import {
-  ArcElement,
   BarController,
   BarElement,
   CategoryScale,
   Chart,
   ChartConfiguration,
-  DoughnutController,
-  Filler,
   Legend,
   LinearScale,
-  LineController,
-  LineElement,
-  PointElement,
   Tooltip,
 } from 'chart.js';
 import { SettingsService } from '../../core/services/settings.service';
 import { BfChartConfig } from './chart-configs';
 
-// Only what the app uses (doughnut, bar and line charts), so the rest of Chart.js is left out of the bundle.
-Chart.register(
-  ArcElement,
-  BarController,
-  BarElement,
-  CategoryScale,
-  DoughnutController,
-  Filler,
-  Legend,
-  LinearScale,
-  LineController,
-  LineElement,
-  PointElement,
-  Tooltip,
-);
+// Only what the app uses (bar charts), so the rest of Chart.js is left out of the bundle.
+Chart.register(BarController, BarElement, CategoryScale, Legend, LinearScale, Tooltip);
 Chart.defaults.responsive = true;
 Chart.defaults.maintainAspectRatio = false;
 Chart.defaults.font.size = 12;
@@ -95,7 +76,7 @@ function resolveColors<T>(value: T): T {
 })
 export class ChartComponent {
   readonly config = input.required<BfChartConfig>();
-  /** Text alternative for screen readers, e.g. "Spending by category for September". */
+  /** Text alternative for screen readers, e.g. "Income and expenses per month". */
   readonly label = input.required<string>();
   readonly height = input(260);
 

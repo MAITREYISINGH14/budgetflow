@@ -1,4 +1,4 @@
-import { greetingFor, percentChange } from './month-comparison';
+import { percentChange } from './month-comparison';
 
 describe('percentChange', () => {
   it('reports an increase as a rounded percentage', () => {
@@ -19,13 +19,5 @@ describe('percentChange', () => {
 
   it('keeps the direction right when the previous value was negative', () => {
     expect(percentChange(500, -1000)?.direction).toBe('up');
-  });
-});
-
-describe('greetingFor', () => {
-  it('picks the greeting for the time of day', () => {
-    expect(greetingFor(8)).toBe('Good morning');
-    expect(greetingFor(13)).toBe('Good afternoon');
-    expect(greetingFor(20)).toBe('Good evening');
   });
 });

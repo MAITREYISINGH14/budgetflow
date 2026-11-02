@@ -8,12 +8,12 @@ You can record income and expenses, set monthly budgets for each category, and s
 
 ## What it does
 
-- **Transactions:** add, edit and delete income and expenses. Search, filter (type, category, date range, amount), sort and paginate. Filters are kept in the URL, so refreshing the page or sharing the link keeps the same view.
+- **Transactions:** add, edit and delete income and expenses. Search, filter (type, category, date range, amount), sort and paginate. Filters are kept in the URL, so refreshing the page or sharing the link keeps the same view. Active filters show as removable chips, and the list shows the total of every matching row.
 - **CSV export:** downloads every transaction that matches the current filters, not just the page you're looking at.
-- **Budgets:** set a monthly limit per expense category and track spent, remaining and status (on track, near limit at 75%, over budget).
-- **Dashboard:** balance, income, expenses and savings rate for the month, spending by category, six-month trends, budget progress and recent transactions.
-- **Analytics:** 1, 3, 6, 12 month or custom date ranges, with top categories and income vs expenses.
-- **Insights:** rule-based messages like "Food spending increased by 24% compared with the previous month".
+- **Budgets:** set a monthly limit per expense category and track spent, remaining and status (on track, near limit at 75%, over budget). Copy last month's budgets in one click, add a budget for an unbudgeted category with one tap, and see how much you can spend per day for the rest of the month.
+- **Dashboard:** answers "how is this month going?" in four blocks: what's left to spend (with a daily allowance and a pace bar comparing spending with the calendar), up to three items that need attention (each linking to the transactions behind it), spending and budgets by category, and this month's recent transactions.
+- **Analytics:** 1, 3, 6, 12 month or custom date ranges compared with the period before, income vs expenses by month, a category table with each category's change, and a review of any past month.
+- **Insights:** rule-based messages like "Food spending is up 24% on last month", ranked together with budget alerts so nothing is said twice.
 - **Currency display:** amounts are recorded in rupees and can be shown in USD, EUR or GBP using live exchange rates.
 - **Light and dark themes:** follows the device setting on first visit, remembers your choice, and applies it before the page draws, so there is no flash.
 - Works on desktop and mobile (floating navigation and bottom-sheet dialogs on phones), can be used with a keyboard, and respects the "reduce motion" setting.
@@ -24,12 +24,10 @@ You can record income and expenses, set monthly budgets for each category, and s
 - **RxJS** for HTTP calls, debounced inputs and bulk requests
 - **Reactive Forms** with custom validators
 - **Angular CDK** for accessible dialogs
-- **Chart.js** for the doughnut, bar and line charts; the dashboard's bar chart and number animations are plain HTML, CSS and signals
+- **Chart.js** for the income vs expenses bar chart; progress bars, the pace bar and number animations are plain HTML, CSS and signals
 - **Vercel** hosting with security headers (Content Security Policy, HSTS, no framing) and Vercel Web Analytics
 - **ESLint** (including Angular accessibility rules), **Prettier**, **Vitest**, and **GitHub Actions** CI that lints, checks formatting, tests and builds every push
-- **Chart.js** for charts
 - **SCSS** for styling
-- **Vitest** for tests
 - **[MockAPI](https://mockapi.io)** to store transactions and budgets (REST)
 - **[Frankfurter](https://frankfurter.dev)** for exchange rates (free, no API key)
 
@@ -43,8 +41,8 @@ src/app/
 │   ├── models.ts          TypeScript types
 │   ├── data/              HTTP clients for MockAPI and Frankfurter
 │   ├── state/             FinanceStore, the single source of data
-│   ├── finance/           calculations: totals, budgets, trends, insights, filters, CSV
-│   ├── services/          settings, currency conversion, notifications
+│   ├── finance/           calculations: totals, budgets, month pace, attention list, trends, insights, filters, CSV
+│   ├── services/          settings, currency conversion, notifications, today's date
 │   ├── interceptors/      turns HTTP errors into readable messages
 │   └── utils/             dates, money formatting, URL filters, form validators
 ├── shared/                table, budget bar, charts, dialogs, pipes
@@ -88,8 +86,11 @@ npm test
 The tests focus on the logic where a mistake would show wrong numbers:
 
 - budget status thresholds and money calculations
+- left to spend, the daily allowance and month pace
+- the attention list's ranking, de-duplication and links
+- copying budgets between months
 - savings rate, monthly trends and insights
-- filtering, sorting, pagination and CSV export
+- filtering, sorting, pagination, filter chips and CSV export
 - the data store (loading, adding, deleting, duplicate budgets) using a fake HTTP backend
 - currency conversion
 - the transaction form, the transaction table, and loading, error and empty states
@@ -122,6 +123,9 @@ npm run build         # production build with size budgets
 - **Categories in code.** MockAPI's free plan only allows two resources, and categories don't change, so they're a fixed list with ids like `food` and `salary`.
 - **Validation in the app.** MockAPI accepts any data, so the app checks amounts, dates and categories, allows only one budget per category per month, and ignores invalid records it gets back.
 - **One accent colour.** Each page has a single bright card (Balance, Left to spend, Net); everything else stays quiet, so the most important number is obvious. All colours are CSS variables, so the light and dark themes are two sets of the same variables.
+- **One question per page.** The dashboard only shows the current month and answers "am I okay, and is anything wrong?". Looking back (past months, trends, period comparisons) lives on Analytics.
+- **"Left to spend" measures against budgets first.** It uses the month's budgets with a limit above 0; with none, it falls back to the month's income. The daily allowance divides what's left by the days remaining, today included.
+- **Today is a signal.** `ClockService` re-checks the date every minute and when the tab becomes visible, so a tab left open overnight moves on to the new day or month by itself.
 - **Bulk operations one at a time.** MockAPI can lose changes when several requests arrive at once, so loading or deleting demo data sends requests one by one and reloads the data afterwards.
 
 ## Limitations
@@ -135,7 +139,6 @@ npm run build         # production build with size budgets
 
 - A real backend with login (for example NestJS and PostgreSQL)
 - Recurring transactions
-- Copying last month's budgets in one click
 - Adding and editing categories
 - Moving the forms to Angular Signal Forms
 - End-to-end tests with Playwright

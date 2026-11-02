@@ -11,26 +11,32 @@ import { errorMessage } from '../../core/interceptors/api-error.interceptor';
 import { Transaction, TransactionSort, TransactionType, TransactionView } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
+import { ClockService } from '../../core/services/clock.service';
 import { DateRangePreset, todayIso } from '../../core/utils/dates';
 import { downloadBlob } from '../../core/utils/download';
+import { sumAmounts } from '../../core/utils/money';
 import {
+  activeFilterChips,
   countActiveFilters,
+  FilterKey,
   DEFAULT_FILTERS,
   findFilterProblem,
   PAGE_SIZE,
   parseTransactionFilters,
   toQueryParams,
   TransactionFilters,
+  withoutFilter,
 } from '../../core/utils/transaction-filters';
 import { confirmAction } from '../../shared/components/confirm-dialog';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
+import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { TransactionDialogData, TransactionFormDialog } from './transaction-form-dialog';
 
 @Component({
   selector: 'bf-transactions-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TransactionTable, StateMessage],
+  imports: [ReactiveFormsModule, TransactionTable, StateMessage, MoneyPipe],
   templateUrl: './transactions-page.html',
   styleUrl: './transactions-page.scss',
 })
@@ -42,7 +48,8 @@ export class TransactionsPage {
   private readonly fb = inject(NonNullableFormBuilder);
   protected readonly store = inject(FinanceStore);
 
-  protected readonly today = todayIso();
+  /** A signal, so "this month" filters move on by themselves at midnight. */
+  protected readonly today = inject(ClockService).today;
 
   /** Filters as they are in the URL. The URL is the source of truth; the form mirrors it. */
   protected readonly filters = toSignal(this.route.queryParamMap.pipe(map(parseTransactionFilters)), {
@@ -73,7 +80,7 @@ export class TransactionsPage {
   /** Every matching row in display order. Used for the table and for CSV export. */
   protected readonly matching = computed(() =>
     sortTransactions(
-      filterTransactions(this.store.transactionViews(), this.filters(), this.today),
+      filterTransactions(this.store.transactionViews(), this.filters(), this.today()),
       this.filters().sort,
     ),
   );
@@ -85,6 +92,19 @@ export class TransactionsPage {
   protected readonly page = computed(() => {
     const totalPages = Math.max(1, Math.ceil(this.matching().length / PAGE_SIZE));
     return paginate(this.matching(), Math.min(this.filters().page, totalPages), PAGE_SIZE);
+  });
+
+  /** One removable chip per active filter, so a link from the dashboard shows what it filtered. */
+  protected readonly chips = computed(() => activeFilterChips(this.filters()));
+
+  /** Total of every matching row (not just this page), worded for the type filter. */
+  protected readonly total = computed(() => {
+    const rows = this.matching();
+    const net = sumAmounts(rows.map((t) => (t.type === 'INCOME' ? t.amount : -t.amount)));
+    const type = this.filters().type;
+    const label = type === 'EXPENSE' ? 'Total spent' : type === 'INCOME' ? 'Total received' : 'Net total';
+    const sign = type ? '' : net > 0 ? '+' : net < 0 ? '−' : '';
+    return { label, sign, amount: Math.abs(net) };
   });
 
   protected readonly showingLabel = computed(() => {
@@ -105,6 +125,14 @@ export class TransactionsPage {
 
   protected goToPage(page: number): void {
     this.router.navigate([], { relativeTo: this.route, queryParams: toQueryParams({ ...this.filters(), page }) });
+  }
+
+  protected removeFilter(key: FilterKey): void {
+    this.filterProblem.set(null);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: toQueryParams(withoutFilter(this.filters(), key)),
+    });
   }
 
   protected clearFilters(): void {

@@ -1,4 +1,4 @@
-import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { ExchangeRateApi, ExchangeRates } from '../data/exchange-rate-api';
 import { CURRENCIES, formatMoney } from '../utils/money';
 import { SettingsService } from './settings.service';
@@ -31,8 +31,10 @@ export class CurrencyService {
   readonly ratesDate = computed(() => this.rates()?.date ?? null);
 
   constructor() {
+    // Only the currency is tracked. loadRates() reads ratesStatus; if the effect tracked it,
+    // every failed fetch would re-trigger the effect and retry forever while offline.
     effect(() => {
-      if (this.settings.currency() !== 'INR') this.loadRates();
+      if (this.settings.currency() !== 'INR') untracked(() => this.loadRates());
     });
   }
 

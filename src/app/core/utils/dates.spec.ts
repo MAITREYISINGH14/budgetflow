@@ -1,9 +1,11 @@
 import {
+  addDays,
   formatDisplayDate,
   formatMonth,
   isValidIsoDate,
   monthBounds,
   parseIsoMonth,
+  previousRange,
   resolveDateRange,
   shiftYearMonth,
   toIsoDate,
@@ -54,5 +56,36 @@ describe('date helpers', () => {
   it('formats display dates and month labels', () => {
     expect(formatDisplayDate('2026-09-01')).toMatch(/^01 Sep\w* 2026$/);
     expect(formatMonth('2026-05')).toBe('May 2026');
+  });
+});
+
+describe('previousRange', () => {
+  it('steps back whole months for month-aligned ranges', () => {
+    expect(previousRange({ startDate: '2026-09-01', endDate: '2026-11-12' }, 3)).toEqual({
+      startDate: '2026-06-01',
+      endDate: '2026-08-31',
+    });
+    expect(previousRange({ startDate: '2026-01-01', endDate: '2026-01-20' }, 1)).toEqual({
+      startDate: '2025-12-01',
+      endDate: '2025-12-31',
+    });
+  });
+
+  it('uses the same number of days for custom ranges', () => {
+    expect(previousRange({ startDate: '2026-03-01', endDate: '2026-03-10' })).toEqual({
+      startDate: '2026-02-19',
+      endDate: '2026-02-28',
+    });
+    expect(previousRange({ startDate: '2026-05-05', endDate: '2026-05-05' })).toEqual({
+      startDate: '2026-05-04',
+      endDate: '2026-05-04',
+    });
+  });
+});
+
+describe('addDays', () => {
+  it('crosses month and year ends', () => {
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+    expect(addDays('2024-03-01', -1)).toBe('2024-02-29');
   });
 });

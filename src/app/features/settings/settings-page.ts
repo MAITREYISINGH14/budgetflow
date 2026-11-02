@@ -1,7 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { filter, finalize, Observable } from 'rxjs';
-import { MOCKAPI_BASE_URL, MOCKAPI_RECORD_LIMIT } from '../../core/config';
+import { MOCKAPI_RECORD_LIMIT } from '../../core/config';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
 import { TransactionType } from '../../core/models';
 import { CurrencyService } from '../../core/services/currency.service';
@@ -33,7 +33,6 @@ export class SettingsPage {
 
   protected readonly settings = this.settingsService.settings;
   protected readonly currencies = CURRENCIES;
-  protected readonly apiUrl = MOCKAPI_BASE_URL;
   protected readonly recordLimit = MOCKAPI_RECORD_LIMIT;
 
   protected readonly preview = computed(() => this.currency.format(125000));

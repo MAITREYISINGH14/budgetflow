@@ -61,6 +61,34 @@ export function trailingMonths(today: string, months: number): DateRange {
   return { startDate: monthBounds(start).startDate, endDate: today };
 }
 
+/** Adds whole days to a YYYY-MM-DD date. */
+export function addDays(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d + days));
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
+}
+
+/**
+ * The period just before `range`, to compare against.
+ * With `months`, the range is treated as month-aligned (as trailingMonths builds them) and
+ * the previous period is the same number of whole months. Otherwise it is the same number
+ * of days, ending the day before `range` starts.
+ */
+export function previousRange(range: DateRange, months?: number): DateRange {
+  if (months) {
+    const start = yearMonthOf(range.startDate);
+    return {
+      startDate: monthBounds(shiftYearMonth(start, -months)).startDate,
+      endDate: monthBounds(shiftYearMonth(start, -1)).endDate,
+    };
+  }
+  const days =
+    Math.round((Date.parse(`${range.endDate}T00:00:00Z`) - Date.parse(`${range.startDate}T00:00:00Z`)) / 86_400_000) +
+    1;
+  const endDate = addDays(range.startDate, -1);
+  return { startDate: addDays(endDate, -(days - 1)), endDate };
+}
+
 export function resolveDateRange(
   preset: DateRangePreset,
   today: string,

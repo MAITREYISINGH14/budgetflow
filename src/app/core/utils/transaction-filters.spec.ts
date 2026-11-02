@@ -1,5 +1,7 @@
 import { convertToParamMap } from '@angular/router';
 import {
+  activeFilterChips,
+  withoutFilter,
   countActiveFilters,
   DEFAULT_FILTERS,
   findFilterProblem,
@@ -105,5 +107,46 @@ describe('filter helpers', () => {
     );
     expect(findFilterProblem({ ...DEFAULT_FILTERS, minAmount: -1 })).toContain('negative');
     expect(findFilterProblem({ ...DEFAULT_FILTERS, minAmount: 100, maxAmount: 100 })).toBeNull();
+  });
+});
+
+describe('filter chips', () => {
+  it('lists one chip per active filter, in form order', () => {
+    const filters = {
+      ...DEFAULT_FILTERS,
+      search: ' swiggy ',
+      type: 'EXPENSE' as const,
+      categoryId: 'food',
+      range: 'this-month' as const,
+      minAmount: 500,
+      maxAmount: 2000,
+    };
+    expect(activeFilterChips(filters)).toEqual([
+      { key: 'search', label: '“swiggy”' },
+      { key: 'type', label: 'Expense' },
+      { key: 'category', label: 'Food' },
+      { key: 'range', label: 'This month' },
+      { key: 'amount', label: '₹500 – ₹2,000' },
+    ]);
+  });
+
+  it('labels open-ended amounts and custom dates', () => {
+    expect(activeFilterChips({ ...DEFAULT_FILTERS, minAmount: 1500 })).toEqual([
+      { key: 'amount', label: '₹1,500 or more' },
+    ]);
+    expect(activeFilterChips({ ...DEFAULT_FILTERS, maxAmount: 0 })).toEqual([{ key: 'amount', label: 'Up to ₹0' }]);
+    expect(
+      activeFilterChips({ ...DEFAULT_FILTERS, range: 'custom', from: '2026-09-01', to: '2026-09-30' })[0].label,
+    ).toMatch(/^01 Sep\w* 2026 – 30 Sep\w* 2026$/);
+  });
+
+  it('has no chips for the defaults', () => {
+    expect(activeFilterChips(DEFAULT_FILTERS)).toEqual([]);
+  });
+
+  it('clears one filter and returns to the first page', () => {
+    const filters = { ...DEFAULT_FILTERS, categoryId: 'food', range: 'custom' as const, from: '2026-09-01', page: 3 };
+    expect(withoutFilter(filters, 'range')).toEqual({ ...DEFAULT_FILTERS, categoryId: 'food' });
+    expect(withoutFilter(filters, 'category')).toEqual({ ...filters, categoryId: null, page: 1 });
   });
 });

@@ -1,29 +1,8 @@
-// ---------- Alerts: tinted by the most serious one ----------
-
-.alerts {
-  margin-bottom: 1.25rem;
-  padding: 1rem 1.375rem;
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--warn) 7%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--warn) 26%, var(--border));
-
-  &:has([data-tone='danger']) {
-    background: color-mix(in srgb, var(--danger) 6%, var(--surface));
-    border-color: color-mix(in srgb, var(--danger) 24%, var(--border));
-  }
-
-  // Two columns on wide screens, so three alerts take two rows instead of three.
-  .notice-list {
-    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
-    gap: 0.625rem 2rem;
-  }
-}
-
-// ---------- Totals: two quiet cards and one bright one ----------
+// ---------- Totals: quiet cards and one bright one ----------
 
 .overview {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
   gap: 1.25rem;
   margin-bottom: 1.25rem;
   // The section carries .panel; the cards inside are the surfaces here.
@@ -207,6 +186,93 @@
   }
 }
 
+// Shown only for over or near-limit budgets: straight to what was spent.
+.budget-card__link {
+  justify-self: start;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+// ---------- Categories without a budget: one tap to add ----------
+
+.unbudgeted {
+  margin-top: 1.75rem;
+}
+
+.unbudgeted__title {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.unbudgeted__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.5rem;
+  padding: 0 1rem 0 0.75rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+
+  .material-symbols-outlined {
+    font-size: 1.125rem;
+    color: var(--primary);
+  }
+
+  &:hover {
+    border-style: solid;
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+}
+
+// ---------- A month without budgets ----------
+
+.empty-month {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  padding: 2rem 2.25rem;
+}
+
+.empty-month__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.empty-month__text {
+  max-width: 34rem;
+  margin: 0;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.empty-month__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 // ---------- Motion ----------
 
 @media (prefers-reduced-motion: no-preference) {
@@ -237,18 +303,6 @@
 // ---------- Phones ----------
 
 @media (max-width: 600px) {
-  .alerts {
-    padding: 0.75rem 1rem;
-
-    .notice-list {
-      gap: 0.5rem;
-    }
-
-    .notice {
-      font-size: 0.8125rem;
-    }
-  }
-
   // Left to spend across the top, Budgeted and Spent side by side below it.
   .overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -305,6 +359,20 @@
       grid-area: meter;
     }
 
+    > .budget-card__link {
+      grid-area: link;
+    }
+
+    // Only cards that show the link get a row for it, so the others keep their spacing.
+    &:has(> .budget-card__link) {
+      grid-template-areas:
+        'head head'
+        'figures figures'
+        'meter meter'
+        'link link'
+        'foot actions';
+    }
+
     > .budget-card__foot {
       grid-area: foot;
       align-self: center;
@@ -327,5 +395,9 @@
 
   .budget-card__spent {
     font-size: 1.75rem;
+  }
+
+  .empty-month {
+    padding: 1.5rem 1.25rem;
   }
 }

@@ -1,17 +1,14 @@
 import type { ChartConfiguration, TooltipItem } from 'chart.js';
-import { CategorySpending, MonthlyTrendPoint } from '../../core/models';
+import { MonthlyTrendPoint } from '../../core/models';
 import { formatMonth } from '../../core/utils/dates';
 
-export type BfChartConfig = ChartConfiguration<'doughnut'> | ChartConfiguration<'bar'> | ChartConfiguration<'line'>;
+export type BfChartConfig = ChartConfiguration<'bar'>;
 type Format = (value: number, options?: { compact?: boolean }) => string;
 
 export const CHART_COLORS = {
   income: 'var(--chart-income)',
   expense: 'var(--chart-expense)',
-  line: 'var(--chart-line)',
-  fill: 'var(--chart-fill)',
   grid: 'var(--chart-grid)',
-  gap: 'var(--surface)',
 };
 
 export const CATEGORY_PALETTE = [
@@ -36,66 +33,6 @@ const moneyAxis = (format: Format) => ({
   border: { display: false },
   ticks: { callback: (value: string | number) => format(Number(value), { compact: true }) },
 });
-
-export function categoryDoughnut(
-  items: CategorySpending[],
-  format: Format,
-  colors?: readonly string[],
-): ChartConfiguration<'doughnut'> {
-  return {
-    type: 'doughnut',
-    data: {
-      labels: items.map((i) => i.name),
-      datasets: [
-        {
-          data: items.map((i) => i.total),
-          backgroundColor: items.map((_, index) => colors?.[index] ?? colorForIndex(index)),
-          borderColor: CHART_COLORS.gap,
-          borderWidth: 3,
-        },
-      ],
-    },
-    options: {
-      cutout: '70%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (ctx: TooltipItem<'doughnut'>) => ` ${ctx.label}: ${format(ctx.parsed)}` } },
-      },
-    },
-  };
-}
-
-export function spendingTrendLine(points: MonthlyTrendPoint[], format: Format): ChartConfiguration<'line'> {
-  return {
-    type: 'line',
-    data: {
-      labels: points.map((p) => formatMonth(p.month, 'shortYear')),
-      datasets: [
-        {
-          label: 'Expenses',
-          data: points.map((p) => p.expenses),
-          borderColor: CHART_COLORS.line,
-          backgroundColor: CHART_COLORS.fill,
-          borderWidth: 2.5,
-          fill: true,
-          cubicInterpolationMode: 'monotone',
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          pointBorderWidth: 2,
-          pointBorderColor: CHART_COLORS.gap,
-          pointBackgroundColor: CHART_COLORS.line,
-        },
-      ],
-    },
-    options: {
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (ctx: TooltipItem<'line'>) => ` Spent ${format(ctx.parsed.y ?? 0)}` } },
-      },
-      scales: { x: { grid: { display: false } }, y: { ...moneyAxis(format), beginAtZero: true } },
-    },
-  };
-}
 
 export function incomeExpenseBars(points: MonthlyTrendPoint[], format: Format): ChartConfiguration<'bar'> {
   return {
@@ -130,32 +67,6 @@ export function incomeExpenseBars(points: MonthlyTrendPoint[], format: Format): 
         },
       },
       scales: { x: { grid: { display: false } }, y: { ...moneyAxis(format), beginAtZero: true } },
-    },
-  };
-}
-
-export function categoryBars(items: CategorySpending[], format: Format): ChartConfiguration<'bar'> {
-  return {
-    type: 'bar',
-    data: {
-      labels: items.map((i) => i.name),
-      datasets: [
-        {
-          label: 'Spent',
-          data: items.map((i) => i.total),
-          backgroundColor: items.map((_, index) => colorForIndex(index)),
-          borderRadius: 6,
-          maxBarThickness: 18,
-        },
-      ],
-    },
-    options: {
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: (ctx: TooltipItem<'bar'>) => ` ${format(ctx.parsed.x ?? 0)}` } },
-      },
-      scales: { x: { ...moneyAxis(format), beginAtZero: true }, y: { grid: { display: false } } },
     },
   };
 }

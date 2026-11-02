@@ -1,6 +1,7 @@
 import { findCategory } from '../categories';
 import { TransactionSort, TransactionType } from '../models';
-import { DateRangePreset, isValidIsoDate } from './dates';
+import { DateRangePreset, formatDisplayDate, isValidIsoDate } from './dates';
+import { formatMoney } from './money';
 
 /**
  * The transactions page treats the URL as the single source of truth for filters:
@@ -124,4 +125,66 @@ export function countActiveFilters(filters: TransactionFilters): number {
     filters.range !== 'all',
     filters.minAmount !== null || filters.maxAmount !== null,
   ].filter(Boolean).length;
+}
+
+export type FilterKey = 'search' | 'type' | 'category' | 'range' | 'amount';
+
+export interface FilterChip {
+  key: FilterKey;
+  label: string;
+}
+
+const RANGE_LABELS: Record<Exclude<DateRangePreset, 'all' | 'custom'>, string> = {
+  'this-month': 'This month',
+  'last-month': 'Last month',
+  'last-3-months': 'Last 3 months',
+  'last-6-months': 'Last 6 months',
+};
+
+function customRangeLabel(from: string | null, to: string | null): string {
+  if (from && to) return `${formatDisplayDate(from)} – ${formatDisplayDate(to)}`;
+  if (from) return `From ${formatDisplayDate(from)}`;
+  if (to) return `Until ${formatDisplayDate(to)}`;
+  return 'Custom dates';
+}
+
+/**
+ * One removable chip per active filter, in the order of the filter form. Shows at a
+ * glance what a link (for example from the dashboard) has filtered the list to.
+ * Amounts are labelled in rupees because that is what the filter compares.
+ */
+export function activeFilterChips(filters: TransactionFilters): FilterChip[] {
+  const chips: FilterChip[] = [];
+  const search = filters.search.trim();
+  if (search) chips.push({ key: 'search', label: `“${search}”` });
+  if (filters.type) chips.push({ key: 'type', label: filters.type === 'INCOME' ? 'Income' : 'Expense' });
+  const category = findCategory(filters.categoryId);
+  if (category) chips.push({ key: 'category', label: category.name });
+  if (filters.range === 'custom') chips.push({ key: 'range', label: customRangeLabel(filters.from, filters.to) });
+  else if (filters.range !== 'all') chips.push({ key: 'range', label: RANGE_LABELS[filters.range] });
+
+  const { minAmount: min, maxAmount: max } = filters;
+  const money = (value: number) => formatMoney(value, 'INR');
+  if (min !== null && max !== null) chips.push({ key: 'amount', label: `${money(min)} – ${money(max)}` });
+  else if (min !== null) chips.push({ key: 'amount', label: `${money(min)} or more` });
+  else if (max !== null) chips.push({ key: 'amount', label: `Up to ${money(max)}` });
+  return chips;
+}
+
+/** The same filters with one chip's filter cleared, back on the first page. */
+export function withoutFilter(filters: TransactionFilters, key: FilterKey): TransactionFilters {
+  const next = { ...filters, page: 1 };
+  switch (key) {
+    case 'search':
+      return { ...next, search: '' };
+    case 'type':
+      // A category belongs to one type, so clearing the type keeps it valid.
+      return { ...next, type: null };
+    case 'category':
+      return { ...next, categoryId: null };
+    case 'range':
+      return { ...next, range: 'all', from: null, to: null };
+    case 'amount':
+      return { ...next, minAmount: null, maxAmount: null };
+  }
 }

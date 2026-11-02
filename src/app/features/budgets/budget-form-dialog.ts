@@ -13,6 +13,8 @@ export interface BudgetDialogData {
   budget?: BudgetView;
   /** Expense categories that do not have a budget for this month yet. */
   availableCategories: Category[];
+  /** Category to pre-select when adding, e.g. from the "No budget yet" chips. */
+  presetCategoryId?: string;
 }
 
 @Component({
@@ -33,7 +35,10 @@ export class BudgetFormDialog {
   protected readonly serverError = signal<string | null>(null);
 
   protected readonly form = this.fb.group({
-    categoryId: this.fb.control<string | null>(this.existing?.categoryId ?? null, Validators.required),
+    categoryId: this.fb.control<string | null>(
+      this.existing?.categoryId ?? this.data.presetCategoryId ?? null,
+      Validators.required,
+    ),
     limit: this.fb.control<number | null>(this.existing?.limit ?? null, [Validators.required, budgetLimitValidator]),
   });
 

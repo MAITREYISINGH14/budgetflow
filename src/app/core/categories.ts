@@ -34,3 +34,8 @@ export function categoriesFor(type: TransactionType | null): Category[] {
 }
 
 export const EXPENSE_CATEGORIES = categoriesFor('EXPENSE');
+
+/** Insights refer to categories by display name; expense names are unique, so this maps them back. */
+export function findExpenseCategoryByName(name: string | null | undefined): Category | undefined {
+  return name ? EXPENSE_CATEGORIES.find((c) => c.name === name) : undefined;
+}

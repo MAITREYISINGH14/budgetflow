@@ -157,4 +157,31 @@ describe('FinanceStore', () => {
     expect((error as ApiError).status).toBe(422);
     http.expectNone(BUDGET_URL);
   });
+
+  it('copies last month’s budgets one at a time, skipping ones already set, then reloads', () => {
+    const billsBudget = { ...foodBudget, id: '11', categoryId: 'bills', limit: 7000 };
+    const octoberFood = { ...foodBudget, id: '12', month: 10, limit: 12000 };
+    loadWith([], [foodBudget, billsBudget, octoberFood]);
+    const progress: number[] = [];
+
+    expect(store.budgetsToCopy({ year: 2026, month: 9 }, { year: 2026, month: 10 })).toEqual([
+      { categoryId: 'bills', limit: 7000, year: 2026, month: 10 },
+    ]);
+    store.copyBudgets({ year: 2026, month: 9 }, { year: 2026, month: 10 }).subscribe((n) => progress.push(n));
+
+    const request = http.expectOne({ url: BUDGET_URL, method: 'POST' });
+    expect(request.request.body).toMatchObject({ categoryId: 'bills', limit: 7000, month: 10, year: 2026 });
+    request.flush({ ...request.request.body, id: '13' });
+
+    expect(progress).toEqual([1]);
+    // Reload after the bulk write, so the UI matches what the server actually stored.
+    http.expectOne(TX_URL).flush([]);
+    http.expectOne(BUDGET_URL).flush([foodBudget, billsBudget, octoberFood, { ...billsBudget, id: '13', month: 10 }]);
+    expect(
+      store
+        .budgetViews()
+        .filter((b) => b.month === 10)
+        .map((b) => b.categoryId),
+    ).toEqual(['food', 'bills']);
+  });
 });

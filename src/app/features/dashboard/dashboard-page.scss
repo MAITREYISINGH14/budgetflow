@@ -1,4 +1,4 @@
-// ---------- Header: greeting + one sentence, month and main action ----------
+// ---------- Header: the month, the day, and the main action ----------
 
 .dash-head {
   display: flex;
@@ -9,40 +9,28 @@
   margin: 0.5rem 0 1.75rem;
 }
 
-.dash-head__greeting {
-  margin: 0 0 0.375rem;
+.dash-head__title {
+  margin: 0;
+  font-size: clamp(1.625rem, 2.6vw, 2.125rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+}
+
+.dash-head__day {
+  margin: 0.25rem 0 0;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-muted);
 }
 
-// Large and light, with the key number picked out in the accent colour.
-.dash-head__headline {
-  margin: 0;
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
-  font-weight: 400;
-  line-height: 1.25;
-  letter-spacing: -0.025em;
-
-  strong {
-    font-weight: 700;
-    color: var(--primary);
-  }
-}
-
-.dash-head__controls {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.dash-head__controls .btn {
+.dash-head__add {
   height: 2.75rem;
   border-radius: 999px;
   padding: 0 1.25rem 0 1rem;
 }
 
-// ---------- Layout ----------
+// ---------- Layout: two rows of two ----------
 
 .dashboard {
   display: grid;
@@ -52,32 +40,25 @@
 .dash-row {
   display: grid;
   gap: 1.25rem;
-}
-
-.dash-row--summary {
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
-  min-height: 13rem;
-}
-
-.dash-row--detail {
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.dash-row--more {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
   align-items: start;
 }
 
-// ---------- Balance: the one bright card ----------
+.dash-row--top {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.dash-row--bottom {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+}
+
+// ---------- Left to spend: the one bright card ----------
 
 .hero {
-  position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 0.75rem;
-  padding: 1.625rem 1.875rem;
+  padding: 1.75rem 1.875rem;
   border-radius: var(--radius-lg);
   background: var(--hero-gradient);
   color: var(--hero-text);
@@ -87,92 +68,126 @@
 .hero__label {
   font-size: 0.9375rem;
   font-weight: 600;
+  color: var(--hero-label);
 }
 
 .hero__value {
-  font-size: clamp(2.75rem, 4.4vw, 3.875rem);
+  font-size: clamp(2.75rem, 4.8vw, 4.25rem);
   font-weight: 400;
   line-height: 1;
   letter-spacing: -0.045em;
 }
 
 .hero__note {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 600;
-
-  .material-symbols-outlined {
-    font-size: 1rem;
-  }
 }
 
-// ---------- Income and Expenses: quiet cards ----------
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 1.5rem 1.625rem;
-  border-radius: var(--radius-lg);
-}
-
-.stat__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+// The month's pace: how much is used against how much of the month has passed.
+.pace {
+  display: grid;
   gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
-.stat__label {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-muted);
-}
-
-.stat__value {
-  font-size: clamp(1.875rem, 2.6vw, 2.25rem);
-  font-weight: 400;
-  line-height: 1.1;
-  letter-spacing: -0.035em;
-}
-
-.stat__note {
+.pace__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
   font-size: 0.8125rem;
-  color: var(--text-subtle);
+  font-weight: 600;
+  color: var(--hero-label);
 }
 
-// Small change pill: green when it's good news, red when it isn't.
-.change {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.625rem 0.25rem 0.4375rem;
+.pace__track {
+  position: relative;
+  height: 0.625rem;
   border-radius: 999px;
-  background: var(--surface-sunken);
-  color: var(--text-muted);
-  font-size: 0.75rem;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.pace__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+}
+
+// Where "today" falls in the month. Spending to the right of it is ahead of the calendar.
+.pace__today {
+  position: absolute;
+  top: -0.3125rem;
+  width: 2px;
+  height: 1.25rem;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.pace__status {
+  font-size: 0.8125rem;
   font-weight: 700;
-  white-space: nowrap;
+}
 
-  .material-symbols-outlined {
-    font-size: 0.875rem;
+.hero__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin: auto 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+
+  div {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
   }
 
-  &[data-tone='good'] {
-    background: var(--ok-soft);
-    color: var(--income);
+  dt {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--hero-label);
   }
 
-  &[data-tone='bad'] {
-    background: var(--danger-soft);
+  dd {
+    margin: 0;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.hero__link {
+  align-self: flex-start;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+// Over the plan: the card goes quiet and the number turns red, as on the budgets page.
+.hero[data-status='OVER'] {
+  border: 1px solid var(--danger-border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-1);
+
+  .hero__label,
+  .pace__labels,
+  .hero__facts dt {
+    color: var(--text-muted);
+  }
+
+  .hero__value,
+  .pace__status {
     color: var(--danger);
   }
+
+  .pace__fill {
+    background: var(--danger);
+  }
 }
 
-// ---------- Cards in the lower rows ----------
+// ---------- Cards ----------
 
 .card {
   display: flex;
@@ -223,179 +238,23 @@
   }
 }
 
-// ---------- Monthly spending: rounded bars, the current month in the accent ----------
+// ---------- Needs attention ----------
 
-.bars {
-  display: flex;
-  gap: 0.875rem;
-  // A fixed height gives the bars' percentage heights something definite to measure against.
-  height: 12.5rem;
-  // Sits at the bottom of the card when the row is taller than the chart.
-  margin: auto 0 0;
+.attention {
+  display: grid;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.bar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.bar__track {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.bar__fill {
-  display: block;
-  border-radius: 0.875rem;
-  // Quiet in both themes, but clearly visible; only the current month is coloured.
-  background: color-mix(in srgb, var(--text) 9%, var(--surface));
-  transform-origin: bottom;
-}
-
-.bar__value {
-  text-align: center;
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-
-.bar__label {
-  text-align: center;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-subtle);
-}
-
-.bar.is-current {
-  .bar__fill {
-    background: var(--accent-gradient);
-  }
-
-  .bar__label {
-    color: var(--text);
-  }
-}
-
-// ---------- Where it went: donut with the total, short legend ----------
-
-.split {
-  flex: 1;
-  display: flex;
+.attention__item {
+  display: grid;
+  grid-template-columns: 1.875rem minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1.125rem;
-}
-
-.donut {
-  position: relative;
-  flex: none;
-  width: 150px;
-}
-
-.donut__center {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  pointer-events: none;
-}
-
-.donut__label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.donut__value {
-  font-size: 1.25rem;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-}
-
-.legend {
-  flex: 1;
-  display: grid;
   gap: 0.75rem;
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  li {
-    display: grid;
-    grid-template-columns: 0.5rem minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 0.625rem;
-    font-size: 0.875rem;
-  }
-}
-
-.legend__dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-}
-
-.legend__name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-muted);
-}
-
-.legend__share {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-// ---------- Budgets preview ----------
-
-.budget-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: 1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.budget-list__row {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.budget-list__name {
-  font-weight: 600;
-}
-
-.budget-list__figures {
-  color: var(--text-muted);
-  font-variant-numeric: tabular-nums;
-
-  strong {
-    color: var(--text);
-  }
-}
-
-// ---------- Insights ----------
-
-.notice-list {
-  gap: 0;
-}
-
-.notice {
-  padding: 0.75rem 0;
+  padding: 0.875rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.45;
 
   & + & {
     border-top: 1px solid var(--border-soft);
@@ -406,61 +265,150 @@
   }
 }
 
-// ---------- Motion ----------
+.attention__icon {
+  display: grid;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  font-size: 1.0625rem;
+  font-variation-settings: 'FILL' 1;
 
-@keyframes grow {
-  from {
-    transform: scaleY(0);
+  [data-tone='danger'] & {
+    background: var(--danger-soft);
+    color: var(--danger);
+  }
+
+  [data-tone='warn'] & {
+    background: var(--warn-soft);
+    color: var(--warn-text);
   }
 }
 
+.attention__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.875rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
+  }
+}
+
+.all-clear {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+
+  .material-symbols-outlined {
+    font-size: 1.75rem;
+    color: var(--ok);
+    font-variation-settings: 'FILL' 1;
+  }
+}
+
+.all-clear__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.all-clear__text {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+// ---------- This month by category ----------
+
+.categories {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.categories__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.categories__name {
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.categories__figures {
+  color: var(--text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+
+  strong {
+    color: var(--text);
+  }
+}
+
+.categories__nobudget {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+}
+
+.categories__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-soft);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+
+  a {
+    font-weight: 700;
+    color: var(--primary);
+  }
+}
+
+// ---------- Motion: the two rows arrive once, in order ----------
+
 @media (prefers-reduced-motion: no-preference) {
-  // Rows appear one after another; bars grow up from the baseline.
   .dash-row > * {
     animation: bf-rise 520ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 
-  .dash-row--summary > :nth-child(2) {
-    animation-delay: 60ms;
+  .dash-row--top > :nth-child(2) {
+    animation-delay: 80ms;
   }
 
-  .dash-row--summary > :nth-child(3) {
-    animation-delay: 120ms;
-  }
-
-  .dash-row--detail > * {
-    animation-delay: 180ms;
-  }
-
-  .dash-row--more > * {
-    animation-delay: 260ms;
-  }
-
-  .bar__fill {
-    animation: grow 800ms cubic-bezier(0.2, 0.8, 0.2, 1) 300ms backwards;
+  .dash-row--bottom > * {
+    animation-delay: 160ms;
   }
 }
 
 // ---------- Smaller screens ----------
 
-@media (max-width: 1100px) {
-  .dash-row--summary {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .hero {
-    grid-column: 1 / -1;
-  }
-
-  .dash-row--detail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-
-    > :first-child {
-      grid-column: 1 / -1;
-    }
-  }
-
-  .dash-row--more {
+@media (max-width: 960px) {
+  .dash-row--top,
+  .dash-row--bottom {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -470,35 +418,13 @@
     margin: 0.25rem 0 1.25rem;
   }
 
-  .dash-head__controls {
+  .dash-head__add {
     width: 100%;
-  }
-
-  .dash-row--summary {
-    gap: 0.75rem;
-    min-height: 0;
+    justify-content: center;
   }
 
   .hero {
-    padding: 1.25rem 1.375rem;
-  }
-
-  .stat {
-    padding: 1rem 1.125rem;
-    gap: 0.5rem;
-  }
-
-  .stat__label {
-    font-size: 0.8125rem;
-  }
-
-  .stat__value {
-    font-size: clamp(1.25rem, 6vw, 1.625rem);
-  }
-
-  .dash-row--detail {
-    grid-template-columns: minmax(0, 1fr);
-    min-height: 0;
+    padding: 1.375rem 1.375rem 1.25rem;
   }
 
   .card {
@@ -513,15 +439,12 @@
     }
   }
 
-  .bars {
-    height: 9.5rem;
-  }
+  .attention__item {
+    grid-template-columns: 1.875rem minmax(0, 1fr);
 
-  .split {
-    gap: 1rem;
-  }
-
-  .donut {
-    width: 130px;
+    .attention__action {
+      grid-column: 2;
+      justify-self: start;
+    }
   }
 }
