@@ -17,11 +17,15 @@ export interface Transaction {
   date: string;
   createdAt: string;
   updatedAt: string;
+  /** Set when the transaction was created by a recurring rule. */
+  ruleId?: string;
 }
 
 /** A transaction joined with its category, ready for display. */
 export interface TransactionView extends Transaction {
   category: Category;
+  /** True while the rule that created it still exists. */
+  recurring?: boolean;
 }
 
 export interface TransactionPayload {
@@ -30,7 +34,36 @@ export interface TransactionPayload {
   categoryId: string;
   description: string;
   date: string;
+  ruleId?: string;
 }
+
+/**
+ * A monthly recurring transaction. Stored in the MockAPI `transactions` resource as a row
+ * with kind "RULE" (the free plan allows two resources), and never counted as money itself:
+ * each month it produces an ordinary transaction that carries its id in `ruleId`.
+ */
+export interface RecurringRule {
+  id: string;
+  type: TransactionType;
+  amount: number;
+  categoryId: string;
+  description: string;
+  /** YYYY-MM-DD of the first occurrence. */
+  startDate: string;
+  /** 1-31. Months without that day use their last day. */
+  day: number;
+  /** Last month (YYYY-MM) that gets an occurrence, or null to repeat with no end. */
+  until: string | null;
+  /** Months (YYYY-MM) whose occurrence was deleted on purpose and must not come back. */
+  skip: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type RecurringRulePayload = Omit<RecurringRule, 'id' | 'createdAt' | 'updatedAt'>;
+
+/** Which occurrences an edit or delete of a recurring transaction affects. */
+export type RecurringScope = 'one' | 'future';
 
 export type TransactionSort = 'newest' | 'oldest' | 'highest' | 'lowest';
 

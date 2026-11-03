@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { isApiConfigured } from '../core/config';
+import { errorMessage } from '../core/interceptors/api-error.interceptor';
+import { ClockService } from '../core/services/clock.service';
 import { SettingsService } from '../core/services/settings.service';
+import { ToastService } from '../core/services/toast.service';
 import { FinanceStore } from '../core/state/finance-store';
 import { ToastHost } from '../shared/components/toast-host';
 
@@ -30,6 +33,8 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly store = inject(FinanceStore);
+  private readonly clock = inject(ClockService);
+  private readonly toast = inject(ToastService);
   protected readonly settings = inject(SettingsService);
 
   /** Until a MockAPI URL is set in core/config.ts, the app shows setup steps instead of pages. */
@@ -54,6 +59,22 @@ export class Shell {
   constructor() {
     // Load transactions and budgets once for the whole app; pages read them from the store.
     if (this.configured) this.store.load();
+
+    // Recurring transactions: after every load, and whenever the date moves on, add the
+    // months rules owe. The store skips months that already exist, so this never duplicates.
+    effect(() => {
+      if (this.store.status() !== 'ready') return;
+      const today = this.clock.today();
+      untracked(() =>
+        this.store.generateDue(today).subscribe({
+          next: (added) => {
+            if (added) this.toast.success(`Added ${added} recurring ${added === 1 ? 'transaction' : 'transactions'}`);
+          },
+          error: (error: unknown) =>
+            this.toast.error(errorMessage(error, 'Recurring transactions could not be added.')),
+        }),
+      );
+    });
   }
 
   protected toggleTheme(): void {

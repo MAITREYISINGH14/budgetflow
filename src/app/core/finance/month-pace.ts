@@ -25,7 +25,12 @@ export interface MonthPace {
   daysLeft: number;
   dayOfMonth: number;
   daysInMonth: number;
-  /** Whole rupees per remaining day, 0 when nothing is left, null for NONE. */
+  /**
+   * Recurring expenses still to come this month that count against `planned`:
+   * for BUDGET only those in budgeted categories, for INCOME all of them.
+   */
+  stillDue: number;
+  /** Whole rupees per remaining day after `stillDue`, 0 when nothing is left, null for NONE. */
   perDay: number | null;
   /** Share of `planned` already spent, rounded down to one decimal. */
   usedPercent: number;
@@ -37,16 +42,18 @@ export interface MonthPace {
 export interface MonthPaceInput {
   /** YYYY-MM-DD, a day inside the month being measured. */
   today: string;
-  budgets: readonly Pick<BudgetView, 'limit' | 'spent'>[];
+  budgets: readonly Pick<BudgetView, 'limit' | 'spent' | 'categoryId'>[];
   income: number;
   expenses: number;
+  /** Recurring expenses scheduled later this month (not yet added). */
+  upcoming?: readonly { categoryId: string; amount: number }[];
 }
 
 /**
  * How the current month is going, for the dashboard hero and the budgets page.
  * Sums are done in paise like the rest of core/finance.
  */
-export function monthPace({ today, budgets, income, expenses }: MonthPaceInput): MonthPace {
+export function monthPace({ today, budgets, income, expenses, upcoming = [] }: MonthPaceInput): MonthPace {
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
   const dayOfMonth = Number(today.slice(8, 10));
@@ -73,6 +80,14 @@ export function monthPace({ today, budgets, income, expenses }: MonthPaceInput):
   }
 
   const leftPaise = plannedPaise - spentPaise;
+  const budgeted = new Set(limited.map((b) => b.categoryId));
+  const duePaise =
+    basis === 'NONE'
+      ? 0
+      : upcoming
+          .filter((u) => basis === 'INCOME' || budgeted.has(u.categoryId))
+          .reduce((sum, u) => sum + toPaise(u.amount), 0);
+  const freePaise = leftPaise - duePaise;
   const usedPercent = plannedPaise > 0 ? Math.floor((spentPaise * 1000) / plannedPaise) / 10 : 0;
 
   let status: PaceStatus = 'NONE';
@@ -90,7 +105,8 @@ export function monthPace({ today, budgets, income, expenses }: MonthPaceInput):
     daysLeft,
     dayOfMonth,
     daysInMonth,
-    perDay: basis === 'NONE' ? null : leftPaise > 0 ? Math.floor(leftPaise / daysLeft / 100) : 0,
+    stillDue: duePaise / 100,
+    perDay: basis === 'NONE' ? null : freePaise > 0 ? Math.floor(freePaise / daysLeft / 100) : 0,
     usedPercent,
     elapsedPercent,
     status,

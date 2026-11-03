@@ -241,3 +241,23 @@ tr[data-type='INCOME'] .type-tag {
     opacity: 1;
   }
 }
+
+// Rows created by a recurring rule; text as well as the icon, so it is not colour or shape alone.
+.repeat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  margin-left: 0.5rem;
+  padding: 0.0625rem 0.5rem 0.0625rem 0.375rem;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  vertical-align: 0.0625rem;
+  white-space: nowrap;
+
+  .material-symbols-outlined {
+    font-size: 0.875rem;
+  }
+}

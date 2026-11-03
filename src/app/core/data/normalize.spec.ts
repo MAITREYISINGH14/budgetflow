@@ -1,4 +1,4 @@
-import { normalizeList, toBudget, toTransaction } from './normalize';
+import { normalizeList, ruleToRow, toBudget, toRecurringRule, toTransaction } from './normalize';
 
 describe('toTransaction', () => {
   const valid = {
@@ -64,5 +64,61 @@ describe('normalizeList', () => {
 
   it('returns an empty list for a non-array body', () => {
     expect(normalizeList({ message: 'Not found' }, toTransaction)).toEqual([]);
+  });
+});
+
+describe('recurring rule rows', () => {
+  const row = {
+    id: '50',
+    kind: 'RULE',
+    type: 'EXPENSE',
+    amount: '649',
+    categoryId: 'subscriptions',
+    description: 'Netflix',
+    date: '2026-09-05',
+    repeatDay: '5',
+    repeatUntil: '',
+    repeatSkip: '2026-10, nonsense ,2026-12',
+    createdAt: 'x',
+    updatedAt: 'y',
+  };
+
+  it('is a rule, never a transaction', () => {
+    expect(toTransaction(row)).toBeNull();
+    expect(toRecurringRule(row)).toEqual({
+      id: '50',
+      type: 'EXPENSE',
+      amount: 649,
+      categoryId: 'subscriptions',
+      description: 'Netflix',
+      startDate: '2026-09-05',
+      day: 5,
+      until: null,
+      skip: ['2026-10', '2026-12'],
+      createdAt: 'x',
+      updatedAt: 'y',
+    });
+  });
+
+  it('rejects a rule with an impossible day', () => {
+    expect(toRecurringRule({ ...row, repeatDay: 32 })).toBeNull();
+    expect(toRecurringRule({ ...row, repeatDay: 0 })).toBeNull();
+  });
+
+  it('round-trips through the stored row shape', () => {
+    const rule = toRecurringRule({ ...row, repeatUntil: '2027-03' })!;
+    expect(toRecurringRule({ ...ruleToRow(rule), id: '50', createdAt: 'x', updatedAt: 'y' })).toEqual(rule);
+  });
+
+  it('keeps the rule link on transactions it created', () => {
+    const t = toTransaction({
+      id: '61',
+      type: 'EXPENSE',
+      amount: 649,
+      categoryId: 'subscriptions',
+      date: '2026-10-05',
+      ruleId: '50',
+    });
+    expect(t?.ruleId).toBe('50');
   });
 });

@@ -1,9 +1,12 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { filter, finalize, Observable } from 'rxjs';
+import { filter, finalize, Observable, switchMap } from 'rxjs';
+import { findCategory } from '../../core/categories';
 import { MOCKAPI_RECORD_LIMIT } from '../../core/config';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
-import { TransactionType } from '../../core/models';
+import { isRuleActive, nextOccurrence, ordinal } from '../../core/finance/recurring';
+import { RecurringRule, TransactionType } from '../../core/models';
+import { ClockService } from '../../core/services/clock.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { DateBehavior, SettingsService } from '../../core/services/settings.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -11,6 +14,14 @@ import { FinanceStore } from '../../core/state/finance-store';
 import { formatDisplayDate } from '../../core/utils/dates';
 import { CURRENCIES, CurrencyCode, formatMoney } from '../../core/utils/money';
 import { confirmAction } from '../../shared/components/confirm-dialog';
+import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import {
+  isRecurringRule,
+  TransactionDialogData,
+  TransactionDialogResult,
+  TransactionFormDialog,
+} from '../transactions/transaction-form-dialog';
+import { RecurringRuleDialog, RecurringRuleDialogData } from './recurring-rule-dialog';
 
 interface BulkProgress {
   label: string;
@@ -21,6 +32,7 @@ interface BulkProgress {
 @Component({
   selector: 'bf-settings-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [MoneyPipe],
   templateUrl: './settings-page.html',
   styleUrl: './settings-page.scss',
 })
@@ -30,6 +42,7 @@ export class SettingsPage {
   private readonly toast = inject(ToastService);
   protected readonly currency = inject(CurrencyService);
   protected readonly store = inject(FinanceStore);
+  private readonly clock = inject(ClockService);
 
   protected readonly settings = this.settingsService.settings;
   protected readonly currencies = CURRENCIES;
@@ -52,6 +65,70 @@ export class SettingsPage {
     return p && p.total ? Math.round((p.done / p.total) * 100) : 0;
   });
   protected readonly hasData = computed(() => this.store.transactions().length > 0 || this.store.budgets().length > 0);
+
+  /** Recurring rules, running ones first, each soonest next date first. */
+  protected readonly rules = computed(() => {
+    const today = this.clock.today();
+    return this.store
+      .rules()
+      .map((rule) => {
+        const active = isRuleActive(rule, today);
+        const next = active ? nextOccurrence(rule, today) : null;
+        return {
+          rule,
+          name: rule.description || findCategory(rule.categoryId)?.name || 'Recurring transaction',
+          category: findCategory(rule.categoryId)?.name ?? '',
+          schedule: `every month on the ${ordinal(rule.day)}`,
+          next: next ? formatDisplayDate(next) : null,
+          active,
+        };
+      })
+      .sort((a, b) => Number(b.active) - Number(a.active) || (a.next ?? '').localeCompare(b.next ?? ''));
+  });
+
+  protected addRecurring(): void {
+    this.dialog
+      .open<TransactionDialogResult, TransactionDialogData>(TransactionFormDialog, {
+        data: { repeat: true },
+        panelClass: 'bf-dialog',
+        width: '520px',
+        maxWidth: 'calc(100vw - 2rem)',
+        ariaLabelledBy: 'transaction-dialog-title',
+      })
+      .closed.pipe(filter((saved): saved is TransactionDialogResult => !!saved))
+      .subscribe((saved) =>
+        this.toast.success(isRecurringRule(saved) ? 'Recurring transaction added' : 'Transaction added'),
+      );
+  }
+
+  protected editRule(rule: RecurringRule): void {
+    this.dialog
+      .open<RecurringRule, RecurringRuleDialogData>(RecurringRuleDialog, {
+        data: { rule },
+        panelClass: 'bf-dialog',
+        width: '520px',
+        maxWidth: 'calc(100vw - 2rem)',
+        ariaLabelledBy: 'rule-dialog-title',
+      })
+      .closed.pipe(filter((saved): saved is RecurringRule => !!saved))
+      .subscribe(() => this.toast.success('Recurring transaction updated'));
+  }
+
+  protected stopRule(rule: RecurringRule, name: string): void {
+    confirmAction(this.dialog, {
+      title: `Stop repeating “${name}”?`,
+      message: 'No more months will be added. Transactions it already added stay as they are.',
+      confirmLabel: 'Stop repeating',
+    })
+      .pipe(
+        filter(Boolean),
+        switchMap(() => this.store.deleteRule(rule.id)),
+      )
+      .subscribe({
+        next: () => this.toast.success('Stopped repeating'),
+        error: (error: unknown) => this.toast.error(errorMessage(error, 'It could not be stopped.')),
+      });
+  }
 
   protected setCurrency(event: Event): void {
     this.settingsService.update({ currency: (event.target as HTMLSelectElement).value as CurrencyCode });

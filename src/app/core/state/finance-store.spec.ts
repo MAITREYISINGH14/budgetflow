@@ -184,4 +184,176 @@ describe('FinanceStore', () => {
         .map((b) => b.categoryId),
     ).toEqual(['food', 'bills']);
   });
+
+  describe('recurring transactions', () => {
+    const ruleRow = {
+      id: '50',
+      kind: 'RULE',
+      type: 'EXPENSE',
+      amount: 649,
+      categoryId: 'subscriptions',
+      description: 'Netflix',
+      date: '2026-09-05',
+      repeatDay: 5,
+      repeatUntil: '',
+      repeatSkip: '',
+      createdAt: 'r',
+      updatedAt: 'r',
+    };
+    const occurrence = (id: string, date: string) => ({
+      id,
+      type: 'EXPENSE',
+      amount: 649,
+      categoryId: 'subscriptions',
+      description: 'Netflix',
+      date,
+      ruleId: '50',
+      createdAt: date,
+      updatedAt: date,
+    });
+
+    function flushCreate(date: string, id: string) {
+      const request = http.expectOne({ url: TX_URL, method: 'POST' });
+      expect(request.request.body).toMatchObject({ date, ruleId: '50', amount: 649 });
+      request.flush({ ...request.request.body, id });
+    }
+
+    it('keeps rule rows out of transactions and marks what they created', () => {
+      loadWith([ruleRow, occurrence('60', '2026-09-05'), food], []);
+      expect(store.rules().map((r) => r.id)).toEqual(['50']);
+      expect(store.transactions().map((t) => t.id)).toEqual(['60', '1']);
+      expect(store.transactionViews().find((t) => t.id === '60')?.recurring).toBe(true);
+      expect(store.transactionViews().find((t) => t.id === '1')?.recurring).toBe(false);
+      expect(store.transactionRecordCount()).toBe(3);
+    });
+
+    it('adds the months a rule owes, one at a time, and nothing the second time', () => {
+      loadWith([ruleRow, occurrence('60', '2026-09-05')], []);
+      const added: number[] = [];
+
+      store.generateDue('2026-11-12').subscribe((n) => added.push(n));
+      flushCreate('2026-10-05', '61');
+      flushCreate('2026-11-05', '62');
+      expect(added).toEqual([2]);
+
+      store.generateDue('2026-11-12').subscribe((n) => added.push(n));
+      http.expectNone(TX_URL);
+      expect(added).toEqual([2, 0]);
+    });
+
+    it('creates a rule and fills in past months straight away', () => {
+      loadWith([], []);
+      let created: unknown;
+
+      store
+        .createRecurring(
+          { type: 'EXPENSE', amount: 649, categoryId: 'subscriptions', description: 'Netflix', date: '2026-10-05' },
+          '2026-11-12',
+        )
+        .subscribe((rule) => (created = rule));
+
+      const ruleRequest = http.expectOne({ url: TX_URL, method: 'POST' });
+      expect(ruleRequest.request.body).toMatchObject({ kind: 'RULE', date: '2026-10-05', repeatDay: 5 });
+      ruleRequest.flush({ ...ruleRequest.request.body, id: '50' });
+      flushCreate('2026-10-05', '61');
+      flushCreate('2026-11-05', '62');
+
+      expect(created).toMatchObject({ id: '50', day: 5, until: null });
+      expect(store.transactions().map((t) => t.date)).toEqual(['2026-10-05', '2026-11-05']);
+    });
+
+    it('deletes one month and remembers it so it is not added again', () => {
+      loadWith([ruleRow, occurrence('60', '2026-09-05'), occurrence('61', '2026-10-05')], []);
+
+      store.deleteOccurrence('61', 'one').subscribe();
+      const put = http.expectOne({ url: `${TX_URL}/50`, method: 'PUT' });
+      expect(put.request.body).toMatchObject({ kind: 'RULE', repeatSkip: '2026-10' });
+      put.flush({ ...put.request.body, id: '50' });
+      http.expectOne({ url: `${TX_URL}/61`, method: 'DELETE' }).flush({});
+
+      expect(store.transactions().map((t) => t.id)).toEqual(['60']);
+      store.generateDue('2026-10-20').subscribe();
+      http.expectNone(TX_URL);
+    });
+
+    it('ends the rule before a month when deleting that month and later ones', () => {
+      loadWith(
+        [ruleRow, occurrence('60', '2026-09-05'), occurrence('61', '2026-10-05'), occurrence('62', '2026-11-05')],
+        [],
+      );
+      const deleted: number[] = [];
+
+      store.deleteOccurrence('61', 'future').subscribe((n) => deleted.push(n));
+      const put = http.expectOne({ url: `${TX_URL}/50`, method: 'PUT' });
+      expect(put.request.body).toMatchObject({ repeatUntil: '2026-09' });
+      put.flush({ ...put.request.body, id: '50' });
+      http.expectOne({ url: `${TX_URL}/61`, method: 'DELETE' }).flush({});
+      http.expectOne({ url: `${TX_URL}/62`, method: 'DELETE' }).flush({});
+
+      expect(deleted).toEqual([2]);
+      expect(store.transactions().map((t) => t.id)).toEqual(['60']);
+    });
+
+    it('removes the rule when deleting from its first month onwards', () => {
+      loadWith([ruleRow, occurrence('60', '2026-09-05')], []);
+      store.deleteOccurrence('60', 'future').subscribe();
+      http.expectOne({ url: `${TX_URL}/50`, method: 'DELETE' }).flush({});
+      http.expectOne({ url: `${TX_URL}/60`, method: 'DELETE' }).flush({});
+      expect(store.rules()).toEqual([]);
+    });
+
+    it('applies an edit to the rule and later months, keeping their dates', () => {
+      loadWith(
+        [ruleRow, occurrence('60', '2026-09-05'), occurrence('61', '2026-10-05'), occurrence('62', '2026-11-05')],
+        [],
+      );
+
+      store
+        .updateOccurrence(
+          '61',
+          { type: 'EXPENSE', amount: 799, categoryId: 'subscriptions', description: 'Netflix', date: '2026-10-07' },
+          'future',
+        )
+        .subscribe();
+
+      const rulePut = http.expectOne({ url: `${TX_URL}/50`, method: 'PUT' });
+      expect(rulePut.request.body).toMatchObject({ amount: 799, repeatDay: 7, date: '2026-09-05' });
+      rulePut.flush({ ...rulePut.request.body, id: '50' });
+      const laterPut = http.expectOne({ url: `${TX_URL}/62`, method: 'PUT' });
+      expect(laterPut.request.body).toMatchObject({ amount: 799, date: '2026-11-05', ruleId: '50' });
+      laterPut.flush({ ...laterPut.request.body, id: '62' });
+      const thisPut = http.expectOne({ url: `${TX_URL}/61`, method: 'PUT' });
+      expect(thisPut.request.body).toMatchObject({ amount: 799, date: '2026-10-07', ruleId: '50' });
+      thisPut.flush({ ...thisPut.request.body, id: '61' });
+
+      expect(store.transactions().map((t) => t.amount)).toEqual([649, 799, 799]);
+    });
+
+    it('keeps the rule link when only one month is edited', () => {
+      loadWith([ruleRow, occurrence('60', '2026-09-05')], []);
+      store
+        .updateOccurrence(
+          '60',
+          { type: 'EXPENSE', amount: 700, categoryId: 'subscriptions', description: 'Netflix', date: '2026-09-05' },
+          'one',
+        )
+        .subscribe();
+      const put = http.expectOne({ url: `${TX_URL}/60`, method: 'PUT' });
+      expect(put.request.body).toMatchObject({ amount: 700, ruleId: '50' });
+    });
+
+    it('refuses a rule whose back-filled months would pass the record limit', () => {
+      const almostFull = Array.from({ length: 98 }, (_, i) => ({ ...food, id: String(i) }));
+      loadWith(almostFull, []);
+      let error: unknown;
+      store
+        .createRecurring(
+          { type: 'EXPENSE', amount: 1, categoryId: 'food', description: '', date: '2026-09-01' },
+          '2026-11-12',
+        )
+        .subscribe({ error: (e) => (error = e) });
+      expect((error as ApiError).status).toBe(422);
+      http.expectNone(TX_URL);
+    });
+  });
 });

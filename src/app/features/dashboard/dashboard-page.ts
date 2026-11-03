@@ -7,7 +7,7 @@ import { inRange, summarize } from '../../core/finance/aggregations';
 import { categoryOverview } from '../../core/finance/category-overview';
 import { insightsForMonth } from '../../core/finance/insights';
 import { monthPace } from '../../core/finance/month-pace';
-import { Transaction } from '../../core/models';
+import { upcomingThisMonth } from '../../core/finance/recurring';
 import { ClockService } from '../../core/services/clock.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -19,7 +19,12 @@ import { CountUp } from '../../shared/components/count-up';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
-import { TransactionDialogData, TransactionFormDialog } from '../transactions/transaction-form-dialog';
+import {
+  isRecurringRule,
+  TransactionDialogData,
+  TransactionDialogResult,
+  TransactionFormDialog,
+} from '../transactions/transaction-form-dialog';
 
 const RECENT_COUNT = 5;
 /** Unbudgeted categories named in the footer before "and N more". */
@@ -64,12 +69,20 @@ export class DashboardPage {
 
   // ---------- 1. Left to spend ----------
 
+  /** Recurring expenses that will still be added later this month. */
+  private readonly upcomingBills = computed(() =>
+    upcomingThisMonth(this.store.rules(), this.store.transactions(), this.clock.today())
+      .filter((u) => u.rule.type === 'EXPENSE')
+      .map((u) => ({ categoryId: u.rule.categoryId, amount: u.rule.amount })),
+  );
+
   protected readonly pace = computed(() =>
     monthPace({
       today: this.clock.today(),
       budgets: this.monthBudgets(),
       income: this.summary().income,
       expenses: this.summary().expenses,
+      upcoming: this.upcomingBills(),
     }),
   );
 
@@ -94,8 +107,10 @@ export class DashboardPage {
     const pace = this.pace();
     if (pace.basis === 'NONE') return 'Add your income or set budgets to see what’s left to spend.';
     if (pace.left <= 0) return 'Nothing left to spend for the rest of the month.';
+    if (pace.perDay === 0) return 'What’s left is needed for bills still due this month.';
     const days = pace.daysLeft === 1 ? 'today' : `a day for the next ${pace.daysLeft} days`;
-    return `${this.format(pace.perDay ?? 0)} ${days}`;
+    const bills = pace.stillDue > 0 ? ', after bills still due' : '';
+    return `${this.format(pace.perDay ?? 0)} ${days}${bills}`;
   });
 
   protected readonly paceText = computed(() => {
@@ -157,14 +172,16 @@ export class DashboardPage {
 
   protected addTransaction(): void {
     this.dialog
-      .open<Transaction, TransactionDialogData>(TransactionFormDialog, {
+      .open<TransactionDialogResult, TransactionDialogData>(TransactionFormDialog, {
         data: {},
         panelClass: 'bf-dialog',
         width: '520px',
         maxWidth: 'calc(100vw - 2rem)',
         ariaLabelledBy: 'transaction-dialog-title',
       })
-      .closed.pipe(filter((saved): saved is Transaction => !!saved))
-      .subscribe(() => this.toast.success('Transaction added'));
+      .closed.pipe(filter((saved): saved is TransactionDialogResult => !!saved))
+      .subscribe((saved) =>
+        this.toast.success(isRecurringRule(saved) ? 'Recurring transaction added' : 'Transaction added'),
+      );
   }
 }

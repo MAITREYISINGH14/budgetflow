@@ -26,6 +26,12 @@
           } @else {
             <span class="muted">No description</span>
           }
+          @if (txn.recurring) {
+            <span class="repeat-tag">
+              <span class="material-symbols-outlined" aria-hidden="true">repeat</span>
+              Monthly
+            </span>
+          }
         </td>
         <td class="cell-category" data-label="Category">
           <span class="category-chip">{{ txn.category.name }}</span>

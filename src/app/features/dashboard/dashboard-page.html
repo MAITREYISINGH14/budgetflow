@@ -69,6 +69,12 @@
               <dt>{{ pace().basis === 'BUDGET' ? 'Budgeted' : 'Income' }}</dt>
               <dd>{{ pace().planned | money }}</dd>
             </div>
+            @if (pace().stillDue > 0) {
+              <div>
+                <dt>Bills still due</dt>
+                <dd>{{ pace().stillDue | money }}</dd>
+              </div>
+            }
           </dl>
         }
         @if (pace().basis !== 'BUDGET') {

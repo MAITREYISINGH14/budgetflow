@@ -22,12 +22,16 @@ describe('TransactionFormDialog', () => {
   let fixture: ComponentFixture<TransactionFormDialog>;
   let component: TransactionFormDialog;
   let element: HTMLElement;
-  let store: { createTransaction: ReturnType<typeof vi.fn>; updateTransaction: ReturnType<typeof vi.fn> };
+  let store: {
+    createTransaction: ReturnType<typeof vi.fn>;
+    updateTransaction: ReturnType<typeof vi.fn>;
+    createRecurring: ReturnType<typeof vi.fn>;
+  };
   let dialogRef: { close: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     localStorage.clear();
-    store = { createTransaction: vi.fn(), updateTransaction: vi.fn() };
+    store = { createTransaction: vi.fn(), updateTransaction: vi.fn(), createRecurring: vi.fn() };
     dialogRef = { close: vi.fn() };
 
     TestBed.configureTestingModule({
@@ -115,5 +119,36 @@ describe('TransactionFormDialog', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
     expect(element.querySelector('[role="alert"]')?.textContent).toContain('stores up to 100 transactions');
     expect((element.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('creates a recurring rule instead of a single transaction when Repeat is ticked', () => {
+    const response = new Subject<unknown>();
+    store.createRecurring.mockReturnValue(response);
+    form().setValue({
+      type: 'EXPENSE',
+      amount: 649,
+      categoryId: 'subscriptions',
+      description: 'Netflix',
+      date: '2026-01-05',
+    });
+    component['repeat'].setValue(true);
+
+    component['submit']();
+
+    expect(store.createTransaction).not.toHaveBeenCalled();
+    expect(store.createRecurring).toHaveBeenCalledWith({
+      type: 'EXPENSE',
+      amount: 649,
+      categoryId: 'subscriptions',
+      description: 'Netflix',
+      date: '2026-01-05',
+    });
+  });
+
+  it('explains what Repeat will add', () => {
+    form().controls.date.setValue('2026-01-31');
+    component['repeat'].setValue(true);
+    fixture.detectChanges();
+    expect(element.querySelector('#txn-repeat-hint')?.textContent).toContain('Added on the 31st of every month.');
   });
 });

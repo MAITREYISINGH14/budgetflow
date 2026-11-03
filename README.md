@@ -9,6 +9,7 @@ You can record income and expenses, set monthly budgets for each category, and s
 ## What it does
 
 - **Transactions:** add, edit and delete income and expenses. Search, filter (type, category, date range, amount), sort and paginate. Filters are kept in the URL, so refreshing the page or sharing the link keeps the same view. Active filters show as removable chips, and the list shows the total of every matching row.
+- **Recurring transactions:** tick "Repeat every month" when adding salary, rent or a subscription and it is added on the same day every month (shorter months use their last day). Past months back to its date are filled in straight away. Repeating rows show a Monthly badge; editing or deleting one asks whether it's for that month only or that month and every later one. Settings lists every recurring transaction with its next date, and lets you edit or stop it. The dashboard's daily allowance leaves room for bills still due this month.
 - **CSV export:** downloads every transaction that matches the current filters, not just the page you're looking at.
 - **Budgets:** set a monthly limit per expense category and track spent, remaining and status (on track, near limit at 75%, over budget). Copy last month's budgets in one click, add a budget for an unbudgeted category with one tap, and see how much you can spend per day for the rest of the month.
 - **Dashboard:** answers "how is this month going?" in four blocks: what's left to spend (with a daily allowance and a pace bar comparing spending with the calendar), up to three items that need attention (each linking to the transactions behind it), spending and budgets by category, and this month's recent transactions.
@@ -71,6 +72,7 @@ The app is already connected to a demo MockAPI project. To use your own:
 
 1. Create a free project at [mockapi.io](https://mockapi.io) with the API prefix `/api/v1`.
 2. Add a resource called `transactions` with these fields: `type` (String), `amount` (Number), `categoryId` (String), `description` (String), `date` (String), `createdAt` (String), `updatedAt` (String).
+   Optionally also add `kind`, `ruleId`, `repeatUntil` and `repeatSkip` (String) and `repeatDay` (Number), used by recurring transactions.
 3. Add a resource called `budgets` with: `categoryId` (String), `month` (Number), `year` (Number), `limit` (Number), `createdAt` (String), `updatedAt` (String).
 4. Put your project URL (for example `https://abc123.mockapi.io/api/v1`) into `MOCKAPI_BASE_URL` in `src/app/core/config.ts`.
 5. Start the app and go to **Settings → Load demo data**.
@@ -89,6 +91,7 @@ The tests focus on the logic where a mistake would show wrong numbers:
 - left to spend, the daily allowance and month pace
 - the attention list's ranking, de-duplication and links
 - copying budgets between months
+- recurring rules: filling in months, short months, skipped months, end dates, and editing or deleting one month or later months
 - savings rate, monthly trends and insights
 - filtering, sorting, pagination, filter chips and CSV export
 - the data store (loading, adding, deleting, duplicate budgets) using a fake HTTP backend
@@ -126,6 +129,7 @@ npm run build         # production build with size budgets
 - **One question per page.** The dashboard only shows the current month and answers "am I okay, and is anything wrong?". Looking back (past months, trends, period comparisons) lives on Analytics.
 - **"Left to spend" measures against budgets first.** It uses the month's budgets with a limit above 0; with none, it falls back to the month's income. The daily allowance divides what's left by the days remaining, today included.
 - **Today is a signal.** `ClockService` re-checks the date every minute and when the tab becomes visible, so a tab left open overnight moves on to the new day or month by itself.
+- **Recurring rules live in the transactions resource.** MockAPI's free plan allows two resources, so a rule is a row in `transactions` with `kind: "RULE"`. The app never counts those rows as money; each month a rule adds an ordinary transaction that carries its `ruleId`, so totals, budgets, filters and CSV work unchanged. The rule holds the values for months not added yet; deleting one month records that month on the rule so it is never added again.
 - **Bulk operations one at a time.** MockAPI can lose changes when several requests arrive at once, so loading or deleting demo data sends requests one by one and reloads the data afterwards.
 
 ## Limitations
@@ -133,12 +137,12 @@ npm run build         # production build with size budgets
 - There's no login. Anyone with the MockAPI URL can see and change the data, so only use demo data.
 - Validation only happens in the browser.
 - MockAPI's free plan stores up to 100 records per resource.
+- Recurring transactions are added by the browser when the app loads or the date changes, not by a server. Two tabs opening at the same moment could each add the same month once.
 - All transactions are loaded at once. That's fine for a few hundred, but a large dataset would need a real backend.
 
 ## Ideas for later
 
 - A real backend with login (for example NestJS and PostgreSQL)
-- Recurring transactions
 - Adding and editing categories
 - Moving the forms to Angular Signal Forms
 - End-to-end tests with Playwright

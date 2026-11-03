@@ -6,6 +6,7 @@ import { filter, finalize, map, switchMap } from 'rxjs';
 import { EXPENSE_CATEGORIES } from '../../core/categories';
 import { inRange, summarize } from '../../core/finance/aggregations';
 import { monthPace } from '../../core/finance/month-pace';
+import { upcomingThisMonth } from '../../core/finance/recurring';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
 import { Budget, BudgetView, Category } from '../../core/models';
 import { ClockService } from '../../core/services/clock.service';
@@ -98,11 +99,16 @@ export class BudgetsPage {
   protected readonly perDay = computed(() => {
     if (!this.isCurrentMonth()) return null;
     const summary = summarize(inRange(this.store.transactions(), monthBounds(this.period())));
+    const today = this.clock.today();
+    const upcoming = upcomingThisMonth(this.store.rules(), this.store.transactions(), today)
+      .filter((u) => u.rule.type === 'EXPENSE')
+      .map((u) => ({ categoryId: u.rule.categoryId, amount: u.rule.amount }));
     const pace = monthPace({
-      today: this.clock.today(),
+      today,
       budgets: this.budgets(),
       income: summary.income,
       expenses: summary.expenses,
+      upcoming,
     });
     return pace.basis === 'BUDGET' && pace.left > 0 ? { amount: pace.perDay ?? 0, days: pace.daysLeft } : null;
   });

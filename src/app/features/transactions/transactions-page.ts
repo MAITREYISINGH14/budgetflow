@@ -8,11 +8,11 @@ import { categoriesFor } from '../../core/categories';
 import { paginate, filterTransactions, sortTransactions } from '../../core/finance/transaction-query';
 import { transactionsToCsv } from '../../core/finance/csv';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
-import { Transaction, TransactionSort, TransactionType, TransactionView } from '../../core/models';
+import { RecurringScope, TransactionSort, TransactionType, TransactionView } from '../../core/models';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
 import { ClockService } from '../../core/services/clock.service';
-import { DateRangePreset, todayIso } from '../../core/utils/dates';
+import { DateRangePreset, formatMonth, todayIso } from '../../core/utils/dates';
 import { downloadBlob } from '../../core/utils/download';
 import { sumAmounts } from '../../core/utils/money';
 import {
@@ -31,7 +31,13 @@ import { confirmAction } from '../../shared/components/confirm-dialog';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
-import { TransactionDialogData, TransactionFormDialog } from './transaction-form-dialog';
+import { askDeleteScope } from './recurring-delete-dialog';
+import {
+  isRecurringRule,
+  TransactionDialogData,
+  TransactionDialogResult,
+  TransactionFormDialog,
+} from './transaction-form-dialog';
 
 @Component({
   selector: 'bf-transactions-page',
@@ -142,19 +148,39 @@ export class TransactionsPage {
 
   protected openForm(transaction?: TransactionView): void {
     this.dialog
-      .open<Transaction, TransactionDialogData>(TransactionFormDialog, {
+      .open<TransactionDialogResult, TransactionDialogData>(TransactionFormDialog, {
         data: { transaction },
         panelClass: 'bf-dialog',
         width: '520px',
         maxWidth: 'calc(100vw - 2rem)',
         ariaLabelledBy: 'transaction-dialog-title',
       })
-      .closed.pipe(filter((saved): saved is Transaction => !!saved))
-      .subscribe(() => this.toast.success(transaction ? 'Transaction updated' : 'Transaction added'));
+      .closed.pipe(filter((saved): saved is TransactionDialogResult => !!saved))
+      .subscribe((saved) =>
+        this.toast.success(
+          transaction
+            ? 'Transaction updated'
+            : isRecurringRule(saved)
+              ? 'Recurring transaction added'
+              : 'Transaction added',
+        ),
+      );
   }
 
   protected confirmDelete(transaction: TransactionView): void {
     const label = transaction.description || transaction.category.name;
+    if (transaction.recurring) {
+      askDeleteScope(this.dialog, { label, monthLabel: formatMonth(transaction.date.slice(0, 7)) })
+        .pipe(
+          filter((scope): scope is RecurringScope => !!scope),
+          switchMap((scope) => this.store.deleteOccurrence(transaction.id, scope)),
+        )
+        .subscribe({
+          next: (count) => this.toast.success(count === 1 ? 'Transaction deleted' : `${count} transactions deleted`),
+          error: (error: unknown) => this.toast.error(errorMessage(error, 'The transaction could not be deleted.')),
+        });
+      return;
+    }
     confirmAction(this.dialog, {
       title: 'Delete this transaction?',
       message: `"${label}" will be removed. Budgets and reports update straight away. This cannot be undone.`,

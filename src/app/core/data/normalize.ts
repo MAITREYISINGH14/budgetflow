@@ -1,6 +1,6 @@
 import { findCategory } from '../categories';
-import { Budget, Transaction } from '../models';
-import { isValidIsoDate } from '../utils/dates';
+import { Budget, RecurringRule, RecurringRulePayload, Transaction } from '../models';
+import { ISO_MONTH_PATTERN, isValidIsoDate } from '../utils/dates';
 
 type Raw = Record<string, unknown>;
 
@@ -15,7 +15,11 @@ function idOf(raw: Raw): string | null {
  * include its own sample fields. Everything coming in is checked here, and rows that
  * are not valid BudgetFlow records are skipped instead of breaking the UI.
  */
+/** Rows with this kind are recurring rules, not money. */
+export const RULE_KIND = 'RULE';
+
 export function toTransaction(raw: Raw): Transaction | null {
+  if (raw['kind'] === RULE_KIND) return null;
   const type = raw['type'];
   const amount = Number(raw['amount']);
   const categoryId = String(raw['categoryId'] ?? '');
@@ -36,6 +40,52 @@ export function toTransaction(raw: Raw): Transaction | null {
     date,
     createdAt: String(raw['createdAt'] ?? ''),
     updatedAt: String(raw['updatedAt'] ?? ''),
+    ...(typeof raw['ruleId'] === 'string' && raw['ruleId'] !== '' ? { ruleId: raw['ruleId'] } : {}),
+  };
+}
+
+/**
+ * A rule row: the same money fields as a transaction plus `repeatDay`, `repeatUntil`
+ * (YYYY-MM or empty) and `repeatSkip` (comma-separated YYYY-MM). Flat strings and numbers
+ * keep the row compatible with a plain MockAPI schema.
+ */
+export function toRecurringRule(raw: Raw): RecurringRule | null {
+  if (raw['kind'] !== RULE_KIND) return null;
+  const base = toTransaction({ ...raw, kind: undefined, ruleId: undefined });
+  const day = Number(raw['repeatDay']);
+  if (!base || !Number.isInteger(day) || day < 1 || day > 31) return null;
+  const until = String(raw['repeatUntil'] ?? '');
+  const skip = String(raw['repeatSkip'] ?? '')
+    .split(',')
+    .map((m) => m.trim())
+    .filter((m) => ISO_MONTH_PATTERN.test(m));
+  return {
+    id: base.id,
+    type: base.type,
+    amount: base.amount,
+    categoryId: base.categoryId,
+    description: base.description,
+    startDate: base.date,
+    day,
+    until: ISO_MONTH_PATTERN.test(until) ? until : null,
+    skip,
+    createdAt: base.createdAt,
+    updatedAt: base.updatedAt,
+  };
+}
+
+/** The row MockAPI stores for a rule (see toRecurringRule). */
+export function ruleToRow(rule: RecurringRulePayload): Record<string, unknown> {
+  return {
+    kind: RULE_KIND,
+    type: rule.type,
+    amount: rule.amount,
+    categoryId: rule.categoryId,
+    description: rule.description,
+    date: rule.startDate,
+    repeatDay: rule.day,
+    repeatUntil: rule.until ?? '',
+    repeatSkip: rule.skip.join(','),
   };
 }
 

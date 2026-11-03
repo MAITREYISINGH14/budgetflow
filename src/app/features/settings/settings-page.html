@@ -91,6 +91,63 @@
     </div>
   </section>
 
+  <section class="panel recurring" aria-labelledby="recurring-title">
+    <div class="prefs__head">
+      <h2 class="panel__title" id="recurring-title">Recurring transactions</h2>
+      <button type="button" class="btn btn--secondary" (click)="addRecurring()" [disabled]="store.status() !== 'ready'">
+        <span class="material-symbols-outlined" aria-hidden="true">add</span>
+        Add recurring
+      </button>
+    </div>
+
+    @if (store.status() === 'ready') {
+      @if (rules().length) {
+        <ul class="recurring__list">
+          @for (item of rules(); track item.rule.id) {
+            <li class="recurring__item" [class.is-ended]="!item.active">
+              <div class="recurring__main">
+                <span class="recurring__name">{{ item.name }}</span>
+                <span class="recurring__meta">
+                  {{ item.category }}, {{ item.schedule }}.
+                  @if (item.next) {
+                    Next on {{ item.next }}.
+                  } @else if (!item.active) {
+                    Ended.
+                  }
+                </span>
+              </div>
+              <span class="recurring__amount figure"
+                >{{ item.rule.type === 'INCOME' ? '+' : '−' }}{{ item.rule.amount | money }}</span
+              >
+              <div class="recurring__actions">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  (click)="editRule(item.rule)"
+                  [attr.aria-label]="'Edit ' + item.name"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+                </button>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--danger"
+                  (click)="stopRule(item.rule, item.name)"
+                  [attr.aria-label]="'Stop repeating ' + item.name"
+                >
+                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p class="field__hint recurring__empty">
+          Salary, rent and subscriptions can be added once and then appear every month by themselves.
+        </p>
+      }
+    }
+  </section>
+
   <section class="panel data" aria-labelledby="data-title">
     <div class="setting__text">
       <h2 class="panel__title" id="data-title">Data</h2>
@@ -100,14 +157,17 @@
       <dl class="data__counts">
         <div>
           <dt>Transactions</dt>
-          <dd class="figure">{{ store.transactions().length }} / {{ recordLimit }}</dd>
+          <dd class="figure">{{ store.transactionRecordCount() }} / {{ recordLimit }}</dd>
         </div>
         <div>
           <dt>Budgets</dt>
           <dd class="figure">{{ store.budgets().length }} / {{ recordLimit }}</dd>
         </div>
       </dl>
-      <p class="field__hint">MockAPI's free plan stores up to {{ recordLimit }} records per resource.</p>
+      <p class="field__hint">
+        MockAPI's free plan stores up to {{ recordLimit }} records per resource. Each recurring transaction counts as
+        one transaction record.
+      </p>
 
       @if (progress(); as p) {
         <div class="data__progress" role="status">
