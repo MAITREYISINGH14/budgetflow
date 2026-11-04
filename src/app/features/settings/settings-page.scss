@@ -100,6 +100,51 @@
   margin: 0.25rem 0 0.75rem;
 }
 
+.notify {
+  padding: 0.5rem 1.375rem 1.25rem;
+}
+
+.notify__lead {
+  margin: 0 0 0.5rem;
+}
+
+.notify__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.25rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notify__option {
+  align-items: flex-start;
+  min-height: 0;
+  padding: 0.5rem 0;
+
+  input {
+    margin-top: 0.1875rem;
+  }
+}
+
+.notify__desc {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.notify__browser {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.import-setting {
+  padding: 0 1.375rem;
+}
+
 .data {
   display: grid;
   gap: 1rem;

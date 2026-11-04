@@ -387,6 +387,25 @@ export class FinanceStore {
     );
   }
 
+  /** Saves reviewed rows from a screenshot import, one at a time. Emits the number saved so far. */
+  importTransactions(payloads: TransactionPayload[]): Observable<number> {
+    if (this.transactionRecordCount() + payloads.length > MOCKAPI_RECORD_LIMIT) {
+      const room = Math.max(0, MOCKAPI_RECORD_LIMIT - this.transactionRecordCount());
+      return throwError(
+        () =>
+          new ApiError(
+            422,
+            `MockAPI's free plan has room for ${room} more ${room === 1 ? 'transaction' : 'transactions'}. Untick some rows or delete old transactions.`,
+          ),
+      );
+    }
+    return this.runBulk(
+      payloads.map((payload) =>
+        this.transactionApi.create(payload).pipe(tap((t) => this.transactionList.update((list) => [...list, t]))),
+      ),
+    );
+  }
+
   // ---------- Bulk operations (Settings page) ----------
 
   /** Demo records that would be created, for showing counts before confirming. */

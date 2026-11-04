@@ -25,6 +25,11 @@ export interface TransactionFilters {
 
 export const PAGE_SIZE = 15;
 
+/** Query params for one expense category's transactions this month: the target of every "View" link. */
+export function categoryThisMonth(categoryId: string): Record<string, string> {
+  return { type: 'EXPENSE', category: categoryId, range: 'this-month' };
+}
+
 export const DEFAULT_FILTERS: TransactionFilters = {
   search: '',
   type: null,

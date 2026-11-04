@@ -148,6 +148,73 @@
     }
   </section>
 
+  <section class="panel notify" id="notifications" aria-labelledby="notifications-title">
+    <div class="prefs__head">
+      <h2 class="panel__title" id="notifications-title">Notifications</h2>
+    </div>
+    <p class="field__hint notify__lead">Shown under the bell at the top of every page.</p>
+
+    <ul class="notify__list">
+      @for (item of notificationKinds; track item.kind) {
+        <li>
+          <label class="check notify__option">
+            <input
+              type="checkbox"
+              [checked]="notifications.enabled()[item.kind]"
+              (change)="setNotificationKind(item.kind, $event)"
+            />
+            <span>
+              {{ item.label }}
+              <span class="notify__desc">{{ item.description }}</span>
+            </span>
+          </label>
+        </li>
+      }
+    </ul>
+
+    <div class="notify__browser">
+      <label class="check notify__option">
+        <input
+          type="checkbox"
+          [checked]="notifications.browserEnabled()"
+          (change)="setBrowserNotifications($event)"
+          [disabled]="notifications.browserPermission() === 'unsupported'"
+        />
+        <span>
+          Also show browser notifications
+          <span class="notify__desc"
+            >For bills, budgets and unusual payments, while BudgetFlow is open in a tab. Your browser will ask
+            first.</span
+          >
+        </span>
+      </label>
+      @if (browserMessage(); as message) {
+        <p class="field__error">{{ message }}</p>
+      }
+    </div>
+  </section>
+
+  <section class="panel import-setting" aria-labelledby="import-title">
+    <div class="setting">
+      <div class="setting__text">
+        <h2 class="setting__title" id="import-title">Screenshot import access code</h2>
+        <p>Only needed if this deployment sets an access code. Ask whoever set up BudgetFlow.</p>
+      </div>
+      <div class="setting__control">
+        <label class="sr-only" for="setting-import-code">Access code</label>
+        <input
+          id="setting-import-code"
+          class="input"
+          type="password"
+          autocomplete="off"
+          [value]="settings().importCode"
+          (change)="setImportCode($event)"
+          placeholder="Not set"
+        />
+      </div>
+    </div>
+  </section>
+
   <section class="panel data" aria-labelledby="data-title">
     <div class="setting__text">
       <h2 class="panel__title" id="data-title">Data</h2>

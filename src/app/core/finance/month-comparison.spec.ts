@@ -1,4 +1,4 @@
-import { percentChange } from './month-comparison';
+import { percentChange, withTone } from './month-comparison';
 
 describe('percentChange', () => {
   it('reports an increase as a rounded percentage', () => {
@@ -19,5 +19,15 @@ describe('percentChange', () => {
 
   it('keeps the direction right when the previous value was negative', () => {
     expect(percentChange(500, -1000)?.direction).toBe('up');
+  });
+});
+
+describe('withTone', () => {
+  it('calls a rise good or bad depending on what is measured', () => {
+    expect(withTone({ direction: 'up', text: '12%' }, true)?.tone).toBe('good');
+    expect(withTone({ direction: 'up', text: '12%' }, false)?.tone).toBe('bad');
+    expect(withTone({ direction: 'down', text: '8%' }, false)?.tone).toBe('good');
+    expect(withTone({ direction: 'flat', text: '0%' }, true)?.tone).toBe('neutral');
+    expect(withTone(null, true)).toBeNull();
   });
 });

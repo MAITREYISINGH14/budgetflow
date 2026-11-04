@@ -21,3 +21,14 @@ export function percentChange(current: number, previous: number): MonthChange | 
   const percent = Math.round(((current - previous) / Math.abs(previous)) * 100);
   return { direction: directionOf(percent), text: `${Math.abs(percent)}%` };
 }
+
+/** A change plus whether it is good news (lower spending is good, lower income is not). */
+export interface ToneChange extends MonthChange {
+  tone: 'good' | 'bad' | 'neutral';
+}
+
+export function withTone(change: MonthChange | null, upIsGood: boolean): ToneChange | null {
+  if (!change) return null;
+  const tone = change.direction === 'flat' ? 'neutral' : (change.direction === 'up') === upIsGood ? 'good' : 'bad';
+  return { ...change, tone };
+}

@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { compareCategorySpending, inRange, monthlyTrend, summarize } from '../../core/finance/aggregations';
-import { MonthChange, percentChange } from '../../core/finance/month-comparison';
+import { percentChange, withTone } from '../../core/finance/month-comparison';
 import { DateRange, YearMonth } from '../../core/models';
 import { ClockService } from '../../core/services/clock.service';
-import { CurrencyService } from '../../core/services/currency.service';
 import { FinanceStore } from '../../core/state/finance-store';
 import {
   formatDisplayDate,
@@ -19,27 +18,17 @@ import {
   yearMonthOf,
 } from '../../core/utils/dates';
 import { sumAmounts } from '../../core/utils/money';
-import { ChartComponent } from '../../shared/charts/chart';
-import { colorForIndex, incomeExpenseBars } from '../../shared/charts/chart-configs';
+import { colorForIndex } from '../../shared/category-colors';
+import { ChangePill } from '../../shared/components/change-pill';
 import { CountUp } from '../../shared/components/count-up';
 import { StateMessage } from '../../shared/components/state-message';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
+import { IncomeExpenseChart } from './income-expense-chart';
 
 type RangeOption = '1' | '3' | '6' | '12' | 'custom';
 
 /** Months offered in "Month in review", counting back from last month. */
 const REVIEW_MONTHS = 12;
-
-/** A change plus whether it is good news, e.g. lower spending is good. */
-interface ToneChange extends MonthChange {
-  tone: 'good' | 'bad' | 'neutral';
-}
-
-function withTone(change: MonthChange | null, upIsGood: boolean): ToneChange | null {
-  if (!change) return null;
-  const tone = change.direction === 'flat' ? 'neutral' : (change.direction === 'up') === upIsGood ? 'good' : 'bad';
-  return { ...change, tone };
-}
 
 /**
  * Looking back: totals for a period compared with the period before it, income against
@@ -49,15 +38,13 @@ function withTone(change: MonthChange | null, upIsGood: boolean): ToneChange | n
 @Component({
   selector: 'bf-analytics-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ChartComponent, StateMessage, MoneyPipe, CountUp],
+  imports: [RouterLink, StateMessage, MoneyPipe, CountUp, ChangePill, IncomeExpenseChart],
   templateUrl: './analytics-page.html',
   styleUrl: './analytics-page.scss',
 })
 export class AnalyticsPage {
-  private readonly currency = inject(CurrencyService);
   private readonly clock = inject(ClockService);
   protected readonly store = inject(FinanceStore);
-  private readonly format = (value: number, options?: { compact?: boolean }) => this.currency.format(value, options);
 
   protected readonly today = this.clock.today;
   protected readonly options: { value: RangeOption; label: string }[] = [
@@ -117,7 +104,7 @@ export class AnalyticsPage {
   protected readonly summary = computed(() => summarize(this.rangeTransactions()));
   private readonly previousSummary = computed(() => summarize(this.previousTransactions()));
 
-  private readonly trend = computed(() => {
+  protected readonly trend = computed(() => {
     const range = this.range();
     return range ? monthlyTrend(this.store.transactions(), range) : [];
   });
@@ -143,10 +130,6 @@ export class AnalyticsPage {
       ),
     };
   });
-
-  // ---------- Income vs expenses by month ----------
-
-  protected readonly incomeExpenseChart = computed(() => incomeExpenseBars(this.trend(), this.format));
 
   // ---------- Categories ----------
 
@@ -203,10 +186,6 @@ export class AnalyticsPage {
       overTotal: sumAmounts(over.map((o) => o.over)),
     };
   });
-
-  protected selectOption(value: RangeOption): void {
-    this.option.set(value);
-  }
 
   protected selectReviewMonth(event: Event): void {
     this.chosenReviewMonth.set((event.target as HTMLSelectElement).value);

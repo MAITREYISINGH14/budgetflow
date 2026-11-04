@@ -1,4 +1,4 @@
-import { currencySymbol, formatMoney, sumAmounts } from './money';
+import { formatMoney, sumAmounts } from './money';
 
 describe('money helpers', () => {
   it('uses Indian digit grouping for INR', () => {
@@ -19,10 +19,5 @@ describe('money helpers', () => {
     expect(0.1 + 0.2).not.toBe(0.3);
     expect(sumAmounts([0.1, 0.2])).toBe(0.3);
     expect(sumAmounts([1000.1, -250.05])).toBe(750.05);
-  });
-
-  it('knows currency symbols', () => {
-    expect(currencySymbol('INR')).toBe('₹');
-    expect(currencySymbol('USD')).toBe('$');
   });
 });

@@ -9,7 +9,7 @@
             name="range"
             [value]="opt.value"
             [checked]="option() === opt.value"
-            (change)="selectOption(opt.value)"
+            (change)="option.set(opt.value)"
           />
           {{ opt.label }}
         </label>
@@ -76,45 +76,21 @@
           <span class="figures__label">Income</span>
           <bf-count-up class="figures__value figure figures__value--income" [value]="s.income" />
           @if (changes()?.income; as c) {
-            <span class="change" [attr.data-tone]="c.tone">
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-              }}</span>
-              <span class="sr-only">{{
-                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-              }}</span>
-              {{ c.text }}
-            </span>
+            <bf-change-pill [change]="c" />
           }
         </div>
         <div class="figures__item">
           <span class="figures__label">Expenses</span>
           <bf-count-up class="figures__value figure" [value]="s.expenses" />
           @if (changes()?.expenses; as c) {
-            <span class="change" [attr.data-tone]="c.tone">
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-              }}</span>
-              <span class="sr-only">{{
-                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-              }}</span>
-              {{ c.text }}
-            </span>
+            <bf-change-pill [change]="c" />
           }
         </div>
         <div class="figures__item">
           <span class="figures__label">Net</span>
           <bf-count-up class="figures__value figure" [class.is-negative]="s.balance < 0" [value]="s.balance" />
           @if (changes()?.net; as c) {
-            <span class="change change--on-accent" [attr.data-tone]="c.tone">
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-              }}</span>
-              <span class="sr-only">{{
-                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-              }}</span>
-              {{ c.text }}
-            </span>
+            <bf-change-pill [change]="c" [onAccent]="true" />
           }
         </div>
         <div class="figures__item">
@@ -133,15 +109,7 @@
           <span class="figures__label">Average monthly spend</span>
           <bf-count-up class="figures__value figure" [value]="averageMonthlySpend()" />
           @if (changes()?.average; as c) {
-            <span class="change" [attr.data-tone]="c.tone">
-              <span class="material-symbols-outlined" aria-hidden="true">{{
-                c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-              }}</span>
-              <span class="sr-only">{{
-                c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-              }}</span>
-              {{ c.text }}
-            </span>
+            <bf-change-pill [change]="c" />
           }
         </div>
       </section>
@@ -153,11 +121,7 @@
           <h2 class="panel__title" id="analytics-ie-title">Income vs expenses by month</h2>
         </div>
         <div class="panel__body">
-          <bf-chart
-            [config]="incomeExpenseChart()"
-            label="Income and expenses per month in the selected period"
-            [height]="260"
-          />
+          <bf-income-expense-chart [data]="trend()" />
         </div>
       </section>
 
@@ -268,15 +232,7 @@
                   @if (hasPrevious()) {
                     <td class="num">
                       @if (item.tone; as c) {
-                        <span class="change" [attr.data-tone]="c.tone">
-                          <span class="material-symbols-outlined" aria-hidden="true">{{
-                            c.direction === 'up' ? 'north' : c.direction === 'down' ? 'south' : 'east'
-                          }}</span>
-                          <span class="sr-only">{{
-                            c.direction === 'up' ? 'Up' : c.direction === 'down' ? 'Down' : 'No change,'
-                          }}</span>
-                          {{ c.text }}
-                        </span>
+                        <bf-change-pill [change]="c" />
                       } @else {
                         <span class="muted">New</span>
                       }

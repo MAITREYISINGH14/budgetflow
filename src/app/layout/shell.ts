@@ -9,6 +9,7 @@ import { SettingsService } from '../core/services/settings.service';
 import { ToastService } from '../core/services/toast.service';
 import { FinanceStore } from '../core/state/finance-store';
 import { ToastHost } from '../shared/components/toast-host';
+import { NotificationBell } from './notification-bell';
 
 interface NavItem {
   path: string;
@@ -25,7 +26,7 @@ interface PageInfo {
 @Component({
   selector: 'bf-shell',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHost],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHost, NotificationBell],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -75,10 +76,6 @@ export class Shell {
         }),
       );
     });
-  }
-
-  protected toggleTheme(): void {
-    this.settings.toggleTheme();
   }
 
   private currentPage(): PageInfo {

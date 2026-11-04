@@ -1,7 +1,8 @@
 import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { RecurringScope } from '../../core/models';
+import { dialogOptions } from '../../shared/components/dialog-options';
 
 export interface RecurringDeleteData {
   /** e.g. "Netflix" */
@@ -78,15 +79,9 @@ export class RecurringDeleteDialog {
 
 /** Opens the dialog; emits the chosen scope, or nothing when cancelled. */
 export function askDeleteScope(dialog: Dialog, data: RecurringDeleteData): Observable<RecurringScope | undefined> {
-  return dialog
-    .open<RecurringScope, RecurringDeleteData>(RecurringDeleteDialog, {
-      data,
-      role: 'alertdialog',
-      ariaLabelledBy: 'recurring-delete-title',
-      ariaDescribedBy: 'recurring-delete-text',
-      panelClass: 'bf-dialog',
-      width: '460px',
-      maxWidth: 'calc(100vw - 2rem)',
-    })
-    .closed.pipe(map((scope) => scope));
+  return dialog.open<RecurringScope, RecurringDeleteData>(RecurringDeleteDialog, {
+    ...dialogOptions(460, 'recurring-delete-title', data),
+    role: 'alertdialog',
+    ariaDescribedBy: 'recurring-delete-text',
+  }).closed;
 }

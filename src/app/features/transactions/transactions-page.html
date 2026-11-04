@@ -10,6 +10,15 @@
       <span class="material-symbols-outlined" aria-hidden="true">download</span>
       Export CSV
     </button>
+    <button
+      type="button"
+      class="btn btn--secondary"
+      (click)="importScreenshots()"
+      [disabled]="store.status() !== 'ready'"
+    >
+      <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+      Import screenshots
+    </button>
     <button type="button" class="btn" (click)="openForm()" [disabled]="store.status() !== 'ready'">
       <span class="material-symbols-outlined" aria-hidden="true">add</span>
       Add transaction

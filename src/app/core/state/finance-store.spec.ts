@@ -356,4 +356,31 @@ describe('FinanceStore', () => {
       http.expectNone(TX_URL);
     });
   });
+
+  it('saves imported rows one at a time and refuses a batch that would pass the limit', () => {
+    loadWith([], []);
+    const row = {
+      type: 'EXPENSE' as const,
+      amount: 452,
+      categoryId: 'food',
+      description: 'Swiggy',
+      date: '2026-11-11',
+    };
+    const progress: number[] = [];
+    store
+      .importTransactions([row, { ...row, amount: 230, description: 'Uber', categoryId: 'transport' }])
+      .subscribe((n) => progress.push(n));
+    const first = http.expectOne({ url: TX_URL, method: 'POST' });
+    first.flush({ ...first.request.body, id: '1' });
+    const second = http.expectOne({ url: TX_URL, method: 'POST' });
+    expect(second.request.body).toMatchObject({ description: 'Uber', amount: 230 });
+    second.flush({ ...second.request.body, id: '2' });
+    expect(progress).toEqual([1, 2]);
+    http.expectOne(TX_URL).flush([]);
+    http.expectOne(BUDGET_URL).flush([]);
+
+    let error: unknown;
+    store.importTransactions(Array.from({ length: 101 }, () => row)).subscribe({ error: (e) => (error = e) });
+    expect((error as ApiError).message).toContain('room for 100 more transactions');
+  });
 });

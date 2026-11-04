@@ -15,10 +15,13 @@
   </nav>
 
   <div class="appbar__actions">
+    @if (configured) {
+      <bf-notification-bell />
+    }
     <button
       type="button"
       class="round-btn"
-      (click)="toggleTheme()"
+      (click)="settings.toggleTheme()"
       [attr.aria-label]="settings.isDark() ? 'Switch to light mode' : 'Switch to dark mode'"
     >
       <span class="material-symbols-outlined" aria-hidden="true">{{

@@ -130,12 +130,9 @@
             @for (row of categories(); track row.categoryId) {
               <li>
                 <div class="categories__row">
-                  <a
-                    class="categories__name"
-                    routerLink="/transactions"
-                    [queryParams]="{ type: 'EXPENSE', category: row.categoryId, range: 'this-month' }"
-                    >{{ row.name }}</a
-                  >
+                  <a class="categories__name" routerLink="/transactions" [queryParams]="categoryLink(row.categoryId)">{{
+                    row.name
+                  }}</a>
                   <span class="categories__figures">
                     <strong>{{ row.spent | money }}</strong>
                     @if (row.budget && row.budget.status !== 'NO_LIMIT') {

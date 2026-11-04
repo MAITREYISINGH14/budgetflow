@@ -6,7 +6,7 @@ import { filter, finalize, map, switchMap } from 'rxjs';
 import { EXPENSE_CATEGORIES } from '../../core/categories';
 import { inRange, summarize } from '../../core/finance/aggregations';
 import { monthPace } from '../../core/finance/month-pace';
-import { upcomingThisMonth } from '../../core/finance/recurring';
+import { upcomingExpenses } from '../../core/finance/recurring';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
 import { Budget, BudgetView, Category } from '../../core/models';
 import { ClockService } from '../../core/services/clock.service';
@@ -24,12 +24,14 @@ import {
   yearMonthOf,
 } from '../../core/utils/dates';
 import { sumAmounts } from '../../core/utils/money';
+import { categoryThisMonth } from '../../core/utils/transaction-filters';
 import { BudgetMeter } from '../../shared/components/budget-meter';
 import { confirmAction } from '../../shared/components/confirm-dialog';
 import { CountUp } from '../../shared/components/count-up';
 import { StateMessage } from '../../shared/components/state-message';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { BudgetDialogData, BudgetFormDialog } from './budget-form-dialog';
+import { dialogOptions } from '../../shared/components/dialog-options';
 
 /** Furthest month ahead that budgets can be planned for. */
 const PLANNING_HORIZON_MONTHS = 12;
@@ -100,9 +102,7 @@ export class BudgetsPage {
     if (!this.isCurrentMonth()) return null;
     const summary = summarize(inRange(this.store.transactions(), monthBounds(this.period())));
     const today = this.clock.today();
-    const upcoming = upcomingThisMonth(this.store.rules(), this.store.transactions(), today)
-      .filter((u) => u.rule.type === 'EXPENSE')
-      .map((u) => ({ categoryId: u.rule.categoryId, amount: u.rule.amount }));
+    const upcoming = upcomingExpenses(this.store.rules(), this.store.transactions(), today);
     const pace = monthPace({
       today,
       budgets: this.budgets(),
@@ -130,18 +130,15 @@ export class BudgetsPage {
 
   protected openForm(budget?: BudgetView, category?: Category): void {
     this.dialog
-      .open<Budget, BudgetDialogData>(BudgetFormDialog, {
-        data: {
+      .open<Budget, BudgetDialogData>(
+        BudgetFormDialog,
+        dialogOptions(440, 'budget-dialog-title', {
           period: this.period(),
           budget,
           availableCategories: this.availableCategories(),
           presetCategoryId: category?.id,
-        },
-        panelClass: 'bf-dialog',
-        width: '440px',
-        maxWidth: 'calc(100vw - 2rem)',
-        ariaLabelledBy: 'budget-dialog-title',
-      })
+        }),
+      )
       .closed.pipe(filter((saved): saved is Budget => !!saved))
       .subscribe(() => this.toast.success(budget ? 'Budget updated' : 'Budget added'));
   }
@@ -181,7 +178,7 @@ export class BudgetsPage {
 
   /** Query params for this month's expenses in one category. */
   private transactionsLink(categoryId: string): Record<string, string> {
-    if (this.isCurrentMonth()) return { type: 'EXPENSE', category: categoryId, range: 'this-month' };
+    if (this.isCurrentMonth()) return categoryThisMonth(categoryId);
     const { startDate, endDate } = monthBounds(this.period());
     return { type: 'EXPENSE', category: categoryId, range: 'custom', from: startDate, to: endDate };
   }

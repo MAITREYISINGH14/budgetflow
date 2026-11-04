@@ -1,5 +1,7 @@
 import { findExpenseCategoryByName } from '../categories';
 import { BudgetView, Insight } from '../models';
+import { describeInsight } from '../utils/insight-text';
+import { categoryThisMonth } from '../utils/transaction-filters';
 
 export const MAX_ATTENTION_ITEMS = 3;
 
@@ -21,13 +23,8 @@ export interface AttentionItem {
 
 type Format = (value: number) => string;
 
-/** Transactions filtered to one expense category for the current month. */
 function categoryLink(categoryId: string): AttentionAction {
-  return {
-    label: 'View',
-    path: '/transactions',
-    queryParams: { type: 'EXPENSE', category: categoryId, range: 'this-month' },
-  };
+  return { label: 'View', path: '/transactions', queryParams: categoryThisMonth(categoryId) };
 }
 
 /**
@@ -76,7 +73,7 @@ export function attentionItems(
       key: 'overspent',
       tone: 'danger',
       icon: 'trending_down',
-      message: `You’ve spent ${format(i.amount ?? 0)} more than you earned ${period}.`,
+      message: describeInsight(i, format, period).message,
       action: { label: 'View', path: '/transactions', queryParams: { type: 'EXPENSE', range: 'this-month' } },
     }));
 
@@ -89,7 +86,7 @@ export function attentionItems(
         key: `up-${category?.id ?? i.category}`,
         tone: 'warn',
         icon: 'arrow_upward',
-        message: `${i.category} spending is up ${i.percentage ?? 0}% on last month.`,
+        message: describeInsight(i, format, period).message,
         action: { label: 'Compare', path: '/analytics' },
       };
     });

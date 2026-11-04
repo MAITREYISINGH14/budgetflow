@@ -24,10 +24,6 @@ export function isValidIsoDate(value: string | null | undefined): value is strin
   return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
 }
 
-export function currentYearMonth(now = new Date()): YearMonth {
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
-}
-
 export function yearMonthOf(isoDate: string): YearMonth {
   return { year: Number(isoDate.slice(0, 4)), month: Number(isoDate.slice(5, 7)) };
 }

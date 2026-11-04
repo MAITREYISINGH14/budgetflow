@@ -88,9 +88,9 @@ describe('attentionItems', () => {
       'this month',
     );
     expect(items.map((i) => i.message)).toEqual([
-      'You’ve spent ₹1,500 more than you earned this month.',
-      'Shopping spending is up 61% on last month.',
-      'Food spending is up 24% on last month.',
+      'You spent ₹1,500 more than you earned this month.',
+      'Shopping spending increased by 61% compared with the previous month.',
+      'Food spending increased by 24% compared with the previous month.',
     ]);
     expect(items[1].action.path).toBe('/analytics');
     expect(items[1].key).toBe('up-shopping');

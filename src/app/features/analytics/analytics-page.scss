@@ -106,41 +106,6 @@
   color: var(--text-subtle);
 }
 
-.change {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: 0.25rem;
-  padding: 0.25rem 0.625rem 0.25rem 0.4375rem;
-  border-radius: 999px;
-  background: var(--surface-sunken);
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-  white-space: nowrap;
-
-  .material-symbols-outlined {
-    font-size: 0.875rem;
-  }
-
-  &[data-tone='good'] {
-    background: var(--ok-soft);
-    color: var(--income);
-  }
-
-  &[data-tone='bad'] {
-    background: var(--danger-soft);
-    color: var(--danger);
-  }
-}
-
-// On the bright Net card the pill stays in the card's ink so it reads on the gradient.
-.change--on-accent,
-.change--on-accent[data-tone] {
-  background: color-mix(in srgb, var(--hero-text) 10%, transparent);
-  color: var(--hero-text);
-}
-
 .figures__note {
   font-size: 0.8125rem;
   font-weight: 600;

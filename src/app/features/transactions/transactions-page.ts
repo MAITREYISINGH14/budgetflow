@@ -32,12 +32,9 @@ import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
 import { askDeleteScope } from './recurring-delete-dialog';
-import {
-  isRecurringRule,
-  TransactionDialogData,
-  TransactionDialogResult,
-  TransactionFormDialog,
-} from './transaction-form-dialog';
+import { ScreenshotImportDialog } from './screenshot-import-dialog';
+import { openTransactionForm } from './transaction-form-dialog';
+import { dialogOptions } from '../../shared/components/dialog-options';
 
 @Component({
   selector: 'bf-transactions-page',
@@ -147,24 +144,14 @@ export class TransactionsPage {
   }
 
   protected openForm(transaction?: TransactionView): void {
+    openTransactionForm(this.dialog, { transaction }).subscribe((message) => this.toast.success(message));
+  }
+
+  protected importScreenshots(): void {
     this.dialog
-      .open<TransactionDialogResult, TransactionDialogData>(TransactionFormDialog, {
-        data: { transaction },
-        panelClass: 'bf-dialog',
-        width: '520px',
-        maxWidth: 'calc(100vw - 2rem)',
-        ariaLabelledBy: 'transaction-dialog-title',
-      })
-      .closed.pipe(filter((saved): saved is TransactionDialogResult => !!saved))
-      .subscribe((saved) =>
-        this.toast.success(
-          transaction
-            ? 'Transaction updated'
-            : isRecurringRule(saved)
-              ? 'Recurring transaction added'
-              : 'Transaction added',
-        ),
-      );
+      .open<number>(ScreenshotImportDialog, dialogOptions(960, 'import-dialog-title'))
+      .closed.pipe(filter((added): added is number => typeof added === 'number' && added > 0))
+      .subscribe((added) => this.toast.success(`Added ${added} ${added === 1 ? 'transaction' : 'transactions'}`));
   }
 
   protected confirmDelete(transaction: TransactionView): void {

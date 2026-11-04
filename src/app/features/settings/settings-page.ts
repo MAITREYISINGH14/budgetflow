@@ -7,6 +7,8 @@ import { errorMessage } from '../../core/interceptors/api-error.interceptor';
 import { isRuleActive, nextOccurrence, ordinal } from '../../core/finance/recurring';
 import { RecurringRule, TransactionType } from '../../core/models';
 import { ClockService } from '../../core/services/clock.service';
+import { NotificationKind } from '../../core/finance/notifications';
+import { NOTIFICATION_KINDS, NotificationService } from '../../core/services/notification.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { DateBehavior, SettingsService } from '../../core/services/settings.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -15,13 +17,9 @@ import { formatDisplayDate } from '../../core/utils/dates';
 import { CURRENCIES, CurrencyCode, formatMoney } from '../../core/utils/money';
 import { confirmAction } from '../../shared/components/confirm-dialog';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
-import {
-  isRecurringRule,
-  TransactionDialogData,
-  TransactionDialogResult,
-  TransactionFormDialog,
-} from '../transactions/transaction-form-dialog';
+import { openTransactionForm } from '../transactions/transaction-form-dialog';
 import { RecurringRuleDialog, RecurringRuleDialogData } from './recurring-rule-dialog';
+import { dialogOptions } from '../../shared/components/dialog-options';
 
 interface BulkProgress {
   label: string;
@@ -43,6 +41,9 @@ export class SettingsPage {
   protected readonly currency = inject(CurrencyService);
   protected readonly store = inject(FinanceStore);
   private readonly clock = inject(ClockService);
+  protected readonly notifications = inject(NotificationService);
+  protected readonly notificationKinds = NOTIFICATION_KINDS;
+  protected readonly browserMessage = signal<string | null>(null);
 
   protected readonly settings = this.settingsService.settings;
   protected readonly currencies = CURRENCIES;
@@ -87,29 +88,15 @@ export class SettingsPage {
   });
 
   protected addRecurring(): void {
-    this.dialog
-      .open<TransactionDialogResult, TransactionDialogData>(TransactionFormDialog, {
-        data: { repeat: true },
-        panelClass: 'bf-dialog',
-        width: '520px',
-        maxWidth: 'calc(100vw - 2rem)',
-        ariaLabelledBy: 'transaction-dialog-title',
-      })
-      .closed.pipe(filter((saved): saved is TransactionDialogResult => !!saved))
-      .subscribe((saved) =>
-        this.toast.success(isRecurringRule(saved) ? 'Recurring transaction added' : 'Transaction added'),
-      );
+    openTransactionForm(this.dialog, { repeat: true }).subscribe((message) => this.toast.success(message));
   }
 
   protected editRule(rule: RecurringRule): void {
     this.dialog
-      .open<RecurringRule, RecurringRuleDialogData>(RecurringRuleDialog, {
-        data: { rule },
-        panelClass: 'bf-dialog',
-        width: '520px',
-        maxWidth: 'calc(100vw - 2rem)',
-        ariaLabelledBy: 'rule-dialog-title',
-      })
+      .open<RecurringRule, RecurringRuleDialogData>(
+        RecurringRuleDialog,
+        dialogOptions(520, 'rule-dialog-title', { rule }),
+      )
       .closed.pipe(filter((saved): saved is RecurringRule => !!saved))
       .subscribe(() => this.toast.success('Recurring transaction updated'));
   }
@@ -128,6 +115,28 @@ export class SettingsPage {
         next: () => this.toast.success('Stopped repeating'),
         error: (error: unknown) => this.toast.error(errorMessage(error, 'It could not be stopped.')),
       });
+  }
+
+  protected setNotificationKind(kind: NotificationKind, event: Event): void {
+    this.notifications.setEnabled(kind, (event.target as HTMLInputElement).checked);
+  }
+
+  protected async setBrowserNotifications(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const result = await this.notifications.setBrowserEnabled(input.checked);
+    input.checked = this.notifications.browserEnabled();
+    this.browserMessage.set(
+      result === 'denied'
+        ? 'Notifications are blocked for this site. Allow them in your browser’s site settings, then try again.'
+        : result === 'unsupported'
+          ? 'This browser does not support notifications.'
+          : null,
+    );
+  }
+
+  protected setImportCode(event: Event): void {
+    this.settingsService.update({ importCode: (event.target as HTMLInputElement).value.trim() });
+    this.toast.success('Access code saved');
   }
 
   protected setCurrency(event: Event): void {

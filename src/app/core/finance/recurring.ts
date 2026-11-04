@@ -118,6 +118,17 @@ export function upcomingThisMonth(
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+/** Recurring expenses still to come this month, in the shape monthPace() takes. */
+export function upcomingExpenses(
+  rules: readonly RecurringRule[],
+  transactions: readonly Transaction[],
+  today: string,
+): { categoryId: string; amount: number }[] {
+  return upcomingThisMonth(rules, transactions, today)
+    .filter((u) => u.rule.type === 'EXPENSE')
+    .map((u) => ({ categoryId: u.rule.categoryId, amount: u.rule.amount }));
+}
+
 /** 1 → "1st", 22 → "22nd", 13 → "13th". */
 export function ordinal(day: number): string {
   const tens = day % 100;

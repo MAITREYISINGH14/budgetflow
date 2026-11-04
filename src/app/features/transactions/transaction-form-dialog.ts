@@ -1,8 +1,8 @@
-import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize, Observable } from 'rxjs';
+import { filter, finalize, map, Observable } from 'rxjs';
 import { categoriesFor } from '../../core/categories';
 import { backfillCount, ordinal } from '../../core/finance/recurring';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
@@ -23,6 +23,7 @@ import {
   firstErrorMessage,
   transactionDateValidator,
 } from '../../core/utils/form-validators';
+import { dialogOptions } from '../../shared/components/dialog-options';
 
 export interface TransactionDialogData {
   transaction?: TransactionView;
@@ -31,10 +32,29 @@ export interface TransactionDialogData {
 }
 
 /** What the dialog closes with: the saved transaction, or the new rule when "Repeat" was ticked. */
-export type TransactionDialogResult = Transaction | RecurringRule;
+type TransactionDialogResult = Transaction | RecurringRule;
 
-export function isRecurringRule(result: TransactionDialogResult): result is RecurringRule {
+function isRecurringRule(result: TransactionDialogResult): result is RecurringRule {
   return 'startDate' in result;
+}
+
+/** Opens the add/edit form; emits the confirmation to show once something was saved. */
+export function openTransactionForm(dialog: Dialog, data: TransactionDialogData = {}): Observable<string> {
+  return dialog
+    .open<TransactionDialogResult, TransactionDialogData>(
+      TransactionFormDialog,
+      dialogOptions(520, 'transaction-dialog-title', data),
+    )
+    .closed.pipe(
+      filter((saved): saved is TransactionDialogResult => !!saved),
+      map((saved) =>
+        data.transaction
+          ? 'Transaction updated'
+          : isRecurringRule(saved)
+            ? 'Recurring transaction added'
+            : 'Transaction added',
+      ),
+    );
 }
 
 type Field = 'type' | 'amount' | 'categoryId' | 'description' | 'date';

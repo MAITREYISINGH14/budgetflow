@@ -1,30 +1,25 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { filter } from 'rxjs';
 import { attentionItems } from '../../core/finance/attention';
 import { inRange, summarize } from '../../core/finance/aggregations';
 import { categoryOverview } from '../../core/finance/category-overview';
 import { insightsForMonth } from '../../core/finance/insights';
 import { monthPace } from '../../core/finance/month-pace';
-import { upcomingThisMonth } from '../../core/finance/recurring';
+import { upcomingExpenses } from '../../core/finance/recurring';
 import { ClockService } from '../../core/services/clock.service';
 import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
 import { formatMonth, monthBounds, toIsoMonth, yearMonthOf } from '../../core/utils/dates';
 import { describeInsight } from '../../core/utils/insight-text';
+import { categoryThisMonth } from '../../core/utils/transaction-filters';
 import { BudgetMeter } from '../../shared/components/budget-meter';
 import { CountUp } from '../../shared/components/count-up';
 import { StateMessage } from '../../shared/components/state-message';
 import { TransactionTable } from '../../shared/components/transaction-table';
 import { MoneyPipe } from '../../shared/pipes/money.pipe';
-import {
-  isRecurringRule,
-  TransactionDialogData,
-  TransactionDialogResult,
-  TransactionFormDialog,
-} from '../transactions/transaction-form-dialog';
+import { openTransactionForm } from '../transactions/transaction-form-dialog';
 
 const RECENT_COUNT = 5;
 /** Unbudgeted categories named in the footer before "and N more". */
@@ -71,9 +66,7 @@ export class DashboardPage {
 
   /** Recurring expenses that will still be added later this month. */
   private readonly upcomingBills = computed(() =>
-    upcomingThisMonth(this.store.rules(), this.store.transactions(), this.clock.today())
-      .filter((u) => u.rule.type === 'EXPENSE')
-      .map((u) => ({ categoryId: u.rule.categoryId, amount: u.rule.amount })),
+    upcomingExpenses(this.store.rules(), this.store.transactions(), this.clock.today()),
   );
 
   protected readonly pace = computed(() =>
@@ -145,6 +138,8 @@ export class DashboardPage {
   // ---------- 3. This month by category ----------
 
   private readonly overview = computed(() => categoryOverview(this.monthTransactions(), this.monthBudgets()));
+  protected readonly categoryLink = categoryThisMonth;
+
   // At most ten expense categories exist, so the whole list fits without a "show all".
   protected readonly categories = computed(() => this.overview().rows);
 
@@ -171,17 +166,6 @@ export class DashboardPage {
   });
 
   protected addTransaction(): void {
-    this.dialog
-      .open<TransactionDialogResult, TransactionDialogData>(TransactionFormDialog, {
-        data: {},
-        panelClass: 'bf-dialog',
-        width: '520px',
-        maxWidth: 'calc(100vw - 2rem)',
-        ariaLabelledBy: 'transaction-dialog-title',
-      })
-      .closed.pipe(filter((saved): saved is TransactionDialogResult => !!saved))
-      .subscribe((saved) =>
-        this.toast.success(isRecurringRule(saved) ? 'Recurring transaction added' : 'Transaction added'),
-      );
+    openTransactionForm(this.dialog, {}).subscribe((message) => this.toast.success(message));
   }
 }

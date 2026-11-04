@@ -51,12 +51,3 @@ export function toPaise(value: number): number {
 export function sumAmounts(values: number[]): number {
   return values.reduce((total, value) => total + toPaise(value), 0) / 100;
 }
-
-/** "₹", "$", "€"… for input prefixes. */
-export function currencySymbol(currency: CurrencyCode): string {
-  const locale = CURRENCIES.find((c) => c.code === currency)?.locale ?? 'en-IN';
-  const part = new Intl.NumberFormat(locale, { style: 'currency', currency })
-    .formatToParts(0)
-    .find((p) => p.type === 'currency');
-  return part?.value ?? currency;
-}

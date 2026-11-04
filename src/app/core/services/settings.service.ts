@@ -11,6 +11,8 @@ export interface AppSettings {
   defaultTransactionType: TransactionType;
   defaultDateBehavior: DateBehavior;
   theme: ThemeMode;
+  /** Sent with screenshot imports when the deployment sets IMPORT_ACCESS_CODE. */
+  importCode: string;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -18,6 +20,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultTransactionType: 'EXPENSE',
   defaultDateBehavior: 'today',
   theme: 'light',
+  importCode: '',
 };
 
 const SETTINGS_KEY = 'budgetflow.settings.v1';
@@ -53,6 +56,7 @@ export function parseSettings(raw: string | null): AppSettings {
       defaultTransactionType: value.defaultTransactionType === 'INCOME' ? 'INCOME' : 'EXPENSE',
       defaultDateBehavior: value.defaultDateBehavior === 'last-used' ? 'last-used' : 'today',
       theme: value.theme === 'dark' || value.theme === 'light' ? value.theme : systemTheme(),
+      importCode: typeof value.importCode === 'string' ? value.importCode.slice(0, 200) : '',
     };
   } catch {
     return { ...DEFAULT_SETTINGS, theme: systemTheme() };
@@ -87,9 +91,9 @@ export class SettingsService {
     this.update({ theme: this.isDark() ? 'light' : 'dark' });
   }
 
-  /** Restores preferences but keeps the chosen light/dark mode. */
+  /** Restores preferences but keeps the chosen light/dark mode and the import access code. */
   reset(): void {
-    this.state.set({ ...DEFAULT_SETTINGS, theme: this.state().theme });
+    this.state.set({ ...DEFAULT_SETTINGS, theme: this.state().theme, importCode: this.state().importCode });
   }
 
   defaultTransactionDate(): string {
@@ -106,9 +110,8 @@ export class SettingsService {
   }
 
   /**
-   * Sets data-theme on <html> straight away (not in an effect), so the CSS variables
-   * are already switched when charts redraw for the new theme.
-   * Keep the colours in sync with public/theme-init.js.
+   * Sets data-theme on <html> straight away (not in an effect), so everything themed
+   * switches in the same frame. Keep the colours in sync with public/theme-init.js.
    */
   private applyTheme(theme: ThemeMode): void {
     const root = this.document.documentElement;

@@ -1,6 +1,7 @@
 import { Dialog, DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { map, Observable } from 'rxjs';
+import { dialogOptions } from './dialog-options';
 
 export interface ConfirmDialogData {
   title: string;
@@ -31,13 +32,9 @@ export class ConfirmDialog {
 export function confirmAction(dialog: Dialog, data: ConfirmDialogData): Observable<boolean> {
   return dialog
     .open<boolean, ConfirmDialogData>(ConfirmDialog, {
-      data,
+      ...dialogOptions(420, 'confirm-title', data),
       role: 'alertdialog',
-      ariaLabelledBy: 'confirm-title',
       ariaDescribedBy: 'confirm-message',
-      panelClass: 'bf-dialog',
-      width: '420px',
-      maxWidth: 'calc(100vw - 2rem)',
     })
     .closed.pipe(map((confirmed) => confirmed === true));
 }

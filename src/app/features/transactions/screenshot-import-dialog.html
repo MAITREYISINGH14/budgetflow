@@ -1,0 +1,194 @@
+<div class="dialog import">
+  <h2 class="dialog__title" id="import-dialog-title">Import from screenshots</h2>
+
+  @if (step() === 'pick' || step() === 'reading') {
+    <p class="dialog__text">
+      Take screenshots of the payment history list in your UPI app (Google Pay, PhonePe, Paytm or your bank’s app), then
+      choose up to {{ maxScreenshots }}. You’ll check every payment before anything is added.
+    </p>
+
+    <div class="import__pick">
+      <label class="btn btn--secondary import__file">
+        <span class="material-symbols-outlined" aria-hidden="true">add_photo_alternate</span>
+        Choose screenshots
+        <input
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          class="sr-only"
+          (change)="pickFiles($event)"
+          [disabled]="step() === 'reading' || files().length >= maxScreenshots"
+        />
+      </label>
+
+      @if (files().length) {
+        <ul class="import__files" aria-label="Chosen screenshots">
+          @for (file of files(); track $index) {
+            <li>
+              <span class="import__filename">{{ file.name }}</span>
+              <button
+                type="button"
+                class="icon-btn"
+                (click)="removeFile($index)"
+                [disabled]="step() === 'reading'"
+                [attr.aria-label]="'Remove ' + file.name"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    <p class="field__hint import__privacy">
+      @switch (provider()) {
+        @case ('gemini') {
+          Screenshots are sent to Google Gemini to be read. On Gemini’s free tier, Google may use what is sent to
+          improve its products and people may review it, so crop out anything you would rather not share.
+        }
+        @case ('anthropic') {
+          Screenshots are sent to Anthropic’s Claude to be read, and are not stored.
+        }
+        @default {
+          Screenshots are sent to the AI service this app is set up with, to be read.
+        }
+      }
+      BudgetFlow keeps only the date, amount, type, category and a short name; UPI IDs and phone numbers are removed.
+    </p>
+
+    @if (error(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--secondary" (click)="ref.close()">Cancel</button>
+      <button type="button" class="btn" (click)="read()" [disabled]="files().length === 0 || step() === 'reading'">
+        {{ step() === 'reading' ? 'Reading screenshots…' : 'Read screenshots' }}
+      </button>
+    </div>
+  } @else {
+    <p class="dialog__text" aria-live="polite">
+      Found {{ rows().length }} {{ rows().length === 1 ? 'payment' : 'payments' }}. Check each one; unticked rows won’t
+      be added.
+    </p>
+
+    <div class="import__table-wrap">
+      <table class="import__table">
+        <caption class="sr-only">
+          Payments found in the screenshots
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr-only">Add</span></th>
+            <th scope="col">Date</th>
+            <th scope="col">Description</th>
+            <th scope="col">Type</th>
+            <th scope="col">Category</th>
+            <th scope="col" class="num">Amount (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of reviewRows(); track item.row.key; let i = $index) {
+            <tr [class.is-off]="!item.row.include">
+              <td>
+                <input
+                  type="checkbox"
+                  class="import__check"
+                  [checked]="item.row.include"
+                  (change)="toggle(item.row.key, $event)"
+                  [attr.aria-label]="'Add payment ' + (i + 1) + ': ' + (item.row.description || 'no name')"
+                />
+              </td>
+              <td>
+                <input
+                  type="date"
+                  class="input"
+                  [value]="item.row.date"
+                  [min]="minDate"
+                  [max]="today()"
+                  (change)="setDate(item.row.key, $event)"
+                  [attr.aria-label]="'Date of payment ' + (i + 1)"
+                />
+              </td>
+              <td>
+                <input
+                  type="text"
+                  class="input"
+                  [value]="item.row.description"
+                  [attr.maxlength]="descriptionMax"
+                  (change)="setDescription(item.row.key, $event)"
+                  [attr.aria-label]="'Description of payment ' + (i + 1)"
+                />
+                @if (item.row.include && item.problem) {
+                  <span class="import__note import__note--error">{{ item.problem }}</span>
+                } @else if (item.row.reason) {
+                  <span class="import__note">{{ item.row.reason }}</span>
+                }
+              </td>
+              <td>
+                <select
+                  class="select"
+                  [value]="item.row.type"
+                  (change)="setType(item.row, $event)"
+                  [attr.aria-label]="'Type of payment ' + (i + 1)"
+                >
+                  <option value="EXPENSE" [selected]="item.row.type === 'EXPENSE'">Paid</option>
+                  <option value="INCOME" [selected]="item.row.type === 'INCOME'">Received</option>
+                </select>
+              </td>
+              <td>
+                <select
+                  class="select"
+                  (change)="setCategory(item.row.key, $event)"
+                  [attr.aria-label]="'Category of payment ' + (i + 1)"
+                >
+                  @for (category of item.categories; track category.id) {
+                    <option [value]="category.id" [selected]="category.id === item.row.categoryId">
+                      {{ category.name }}
+                    </option>
+                  }
+                </select>
+              </td>
+              <td class="num">
+                <input
+                  type="number"
+                  class="input num"
+                  inputmode="decimal"
+                  min="0.01"
+                  step="0.01"
+                  [value]="item.row.amount"
+                  (change)="setAmount(item.row.key, $event)"
+                  [attr.aria-label]="'Amount of payment ' + (i + 1)"
+                />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (error(); as message) {
+      <p class="form-error" role="alert">{{ message }}</p>
+    }
+
+    <div class="dialog__actions">
+      <button type="button" class="btn btn--secondary" (click)="backToPick()" [disabled]="step() === 'saving'">
+        Back
+      </button>
+      <button type="button" class="btn" (click)="save()" [disabled]="toAdd().length === 0 || step() === 'saving'">
+        @if (step() === 'saving') {
+          Adding {{ saved() }} of {{ toAdd().length }}…
+        } @else {
+          Add {{ toAdd().length }} {{ toAdd().length === 1 ? 'transaction' : 'transactions' }}
+        }
+      </button>
+    </div>
+    @if (ticked() > toAdd().length) {
+      <p class="field__hint import__skipped">
+        {{ ticked() - toAdd().length }} ticked {{ ticked() - toAdd().length === 1 ? 'row needs' : 'rows need' }} fixing
+        before {{ ticked() - toAdd().length === 1 ? 'it' : 'they' }} can be added.
+      </p>
+    }
+  }
+</div>
