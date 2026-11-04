@@ -1,8 +1,9 @@
 import { findCategory } from '../categories';
 import { Transaction, TransactionPayload, TransactionType } from '../models';
 import { addDays, isValidIsoDate, MIN_DATE } from '../utils/dates';
-import { DESCRIPTION_MAX, MAX_AMOUNT } from '../utils/form-validators';
+import { MAX_AMOUNT } from '../utils/form-validators';
 import { toPaise } from '../utils/money';
+import { categorize, CategorySource, cleanMerchantName, LearnedCategories } from './merchant';
 
 /**
  * Screenshot import, after the server has read the images. Nothing here trusts the model:
@@ -25,51 +26,16 @@ export interface ImportRow {
   date: string;
   description: string;
   categoryId: string;
+  /** How the category was chosen, shown in the review table. */
+  categorySource: CategorySource;
   status: ImportStatus;
 }
 
 /** How far back an unlabelled date can reach; older rows are almost certainly misread. */
 const MAX_AGE_DAYS = 400;
 
-// Most specific first; matched against the lower-cased merchant name.
-const MERCHANT_CATEGORIES: [RegExp, string][] = [
-  [/salary|payroll/, 'salary'],
-  [/swiggy instamart|blinkit|zepto|bigbasket|dmart|grocer|kirana/, 'food'],
-  [/swiggy|zomato|domino|pizza|kfc|mcdonald|starbucks|cafe|restaurant|bakery|chai/, 'food'],
-  [/uber|ola|rapido|metro|petrol|fuel|indian oil|hpcl|bpcl|parking|fastag/, 'transport'],
-  [/irctc|makemytrip|goibibo|indigo|air india|vistara|akasa|redbus|oyo|airbnb|hotel/, 'travel'],
-  [/netflix|spotify|hotstar|prime video|youtube|jiocinema|zee5|sonyliv|apple\.com|google play/, 'subscriptions'],
-  [/airtel|jio|vodafone|\bvi\b|bsnl|electricity|bescom|tata power|adani|gas|water|broadband|recharge|bill/, 'bills'],
-  [/apollo|pharm|1mg|netmeds|medplus|hospital|clinic|diagnostic|lab/, 'healthcare'],
-  [/bookmyshow|pvr|inox|cinema|steam|playstation/, 'entertainment'],
-  [/udemy|coursera|byju|unacademy|school|college|tuition|book/, 'education'],
-  [/amazon|flipkart|myntra|ajio|meesho|nykaa|decathlon|croma|reliance digital|ikea|store|mart/, 'shopping'],
-];
-
 function clean(value: unknown): string {
   return typeof value === 'string' ? value : '';
-}
-
-/** Removes UPI IDs, phone, account and reference numbers that may have slipped into a name. */
-export function stripPersonalInfo(text: string): string {
-  return text
-    .replace(/\S+@\S+/g, '')
-    .replace(/(?:x{2,}|\*{2,})\s?\d{2,}/gi, '')
-    .replace(/\+?\d[\d\s-]{5,}\d/g, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .slice(0, DESCRIPTION_MAX);
-}
-
-/** A category from the merchant name first, then the model's hint, else Other. */
-export function guessCategory(name: string, type: TransactionType, hint: unknown): string {
-  const lower = name.toLowerCase();
-  for (const [pattern, id] of MERCHANT_CATEGORIES) {
-    if (pattern.test(lower) && findCategory(id)?.type === type) return id;
-  }
-  const hinted = findCategory(clean(hint));
-  if (hinted && hinted.type === type) return hinted.id;
-  return type === 'INCOME' ? 'other-income' : 'other-expense';
 }
 
 /**
@@ -99,8 +65,11 @@ function toStatus(value: unknown): ImportStatus {
   return value === 'failed' || value === 'pending' || value === 'refunded' ? value : 'success';
 }
 
-/** Turns the server's rows into review rows. Rows with no usable amount are dropped. */
-export function toImportRows(raw: unknown, today: string): ImportRow[] {
+/**
+ * Turns the server's rows into review rows: names cleaned, each with a category (your own
+ * past choice for that merchant first). Rows with no usable amount are dropped.
+ */
+export function toImportRows(raw: unknown, today: string, learned: LearnedCategories = new Map()): ImportRow[] {
   const rows = Array.isArray(raw) ? raw : [];
   return rows.flatMap((item, index): ImportRow[] => {
     const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
@@ -108,7 +77,8 @@ export function toImportRows(raw: unknown, today: string): ImportRow[] {
     if (!Number.isFinite(amount) || amount <= 0) return [];
 
     const type: TransactionType = row['direction'] === 'credit' ? 'INCOME' : 'EXPENSE';
-    const description = stripPersonalInfo(clean(row['name']));
+    const description = cleanMerchantName(clean(row['name']));
+    const category = categorize(description, type, row['categoryHint'], learned);
     const status = toStatus(row['status']);
     const date = resolveDate(row['date'], today);
     const tooLarge = amount > MAX_AMOUNT;
@@ -129,7 +99,8 @@ export function toImportRows(raw: unknown, today: string): ImportRow[] {
         amount,
         date: date ?? today,
         description,
-        categoryId: guessCategory(description, type, row['categoryHint']),
+        categoryId: category.categoryId,
+        categorySource: category.source,
         status,
       },
     ];

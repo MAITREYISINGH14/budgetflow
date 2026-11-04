@@ -11,6 +11,7 @@ import {
   rowsToPayloads,
   toImportRows,
 } from '../../core/finance/screenshot-import';
+import { categorize, CategorySource, LearnedCategories, learnCategories } from '../../core/finance/merchant';
 import { errorMessage } from '../../core/interceptors/api-error.interceptor';
 import { TransactionType } from '../../core/models';
 import { ClockService } from '../../core/services/clock.service';
@@ -55,6 +56,22 @@ export class ScreenshotImportDialog {
   protected readonly rows = signal<ImportRow[]>([]);
   protected readonly saved = signal(0);
 
+  /** Your past category for each merchant, from saved transactions; refreshed on each read. */
+  private learned: LearnedCategories = new Map();
+
+  protected readonly sourceLabel: Record<CategorySource, string> = {
+    history: 'From your history',
+    merchant: 'Known merchant',
+    ai: 'AI suggestion',
+    default: 'No match: check this',
+    you: 'Your choice',
+  };
+
+  /** Ticked rows that fell back to Other, so the summary can say how many need a look. */
+  protected readonly unmatched = computed(
+    () => this.rows().filter((r) => r.include && r.categorySource === 'default').length,
+  );
+
   /** Rows with what the table needs: their categories and any problem stopping them being saved. */
   protected readonly reviewRows = computed(() =>
     this.rows().map((row) => ({
@@ -97,7 +114,8 @@ export class ScreenshotImportDialog {
     const today = this.today();
     this.api.read(images, today).subscribe({
       next: (raw) => {
-        const rows = markDuplicates(toImportRows(raw, today), this.store.transactions());
+        this.learned = learnCategories(this.store.transactions());
+        const rows = markDuplicates(toImportRows(raw, today, this.learned), this.store.transactions());
         if (rows.length === 0) {
           this.error.set('No payments were found. Use screenshots of the payment history list in your UPI app.');
           this.step.set('pick');
@@ -132,8 +150,15 @@ export class ScreenshotImportDialog {
     this.patch(key, { date: (event.target as HTMLInputElement).value });
   }
 
-  protected setDescription(key: string, event: Event): void {
-    this.patch(key, { description: (event.target as HTMLInputElement).value.slice(0, DESCRIPTION_MAX) });
+  protected setDescription(row: ImportRow, event: Event): void {
+    const description = (event.target as HTMLInputElement).value.slice(0, DESCRIPTION_MAX);
+    // A renamed row picks up a stronger match (your history, a known merchant) unless you chose its category.
+    const next = categorize(description, row.type, null, this.learned);
+    const better = row.categorySource !== 'you' && (next.source === 'history' || next.source === 'merchant');
+    this.patch(
+      row.key,
+      better ? { description, categoryId: next.categoryId, categorySource: next.source } : { description },
+    );
   }
 
   protected setAmount(key: string, event: Event): void {
@@ -142,15 +167,17 @@ export class ScreenshotImportDialog {
 
   protected setType(row: ImportRow, event: Event): void {
     const type = (event.target as HTMLSelectElement).value as TransactionType;
-    const keep = categoriesFor(type).some((c) => c.id === row.categoryId);
-    this.patch(row.key, {
-      type,
-      categoryId: keep ? row.categoryId : type === 'INCOME' ? 'other-income' : 'other-expense',
-    });
+    const keep = row.categorySource === 'you' && categoriesFor(type).some((c) => c.id === row.categoryId);
+    if (keep) {
+      this.patch(row.key, { type });
+      return;
+    }
+    const next = categorize(row.description, type, null, this.learned);
+    this.patch(row.key, { type, categoryId: next.categoryId, categorySource: next.source });
   }
 
   protected setCategory(key: string, event: Event): void {
-    this.patch(key, { categoryId: (event.target as HTMLSelectElement).value });
+    this.patch(key, { categoryId: (event.target as HTMLSelectElement).value, categorySource: 'you' });
   }
 
   protected save(): void {

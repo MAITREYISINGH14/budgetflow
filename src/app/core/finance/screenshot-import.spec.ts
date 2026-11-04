@@ -1,14 +1,5 @@
 import { Transaction } from '../models';
-import {
-  guessCategory,
-  ImportRow,
-  markDuplicates,
-  resolveDate,
-  rowProblem,
-  rowsToPayloads,
-  stripPersonalInfo,
-  toImportRows,
-} from './screenshot-import';
+import { ImportRow, markDuplicates, resolveDate, rowProblem, rowsToPayloads, toImportRows } from './screenshot-import';
 
 const TODAY = '2026-11-12';
 
@@ -40,6 +31,7 @@ describe('toImportRows', () => {
         date: '2026-11-11',
         description: 'Swiggy',
         categoryId: 'food',
+        categorySource: 'merchant',
         status: 'success',
       },
     ]);
@@ -102,31 +94,6 @@ describe('resolveDate', () => {
   });
 });
 
-describe('stripPersonalInfo', () => {
-  it('removes UPI IDs, phone numbers and masked account numbers', () => {
-    expect(stripPersonalInfo('Rahul Sharma rahul.s@okaxis')).toBe('Rahul Sharma');
-    expect(stripPersonalInfo('Paid to +91 98765 43210')).toBe('Paid to');
-    expect(stripPersonalInfo('HDFC XXXX1234 transfer')).toBe('HDFC transfer');
-    expect(stripPersonalInfo('Amazon Pay')).toBe('Amazon Pay');
-  });
-});
-
-describe('guessCategory', () => {
-  it('prefers known merchants over the model hint', () => {
-    expect(guessCategory('Zomato Ltd', 'EXPENSE', 'shopping')).toBe('food');
-    expect(guessCategory('Swiggy Instamart', 'EXPENSE', 'other-expense')).toBe('food');
-    expect(guessCategory('Uber India', 'EXPENSE', 'other-expense')).toBe('transport');
-    expect(guessCategory('Airtel Prepaid', 'EXPENSE', 'other-expense')).toBe('bills');
-    expect(guessCategory('Netflix', 'EXPENSE', 'entertainment')).toBe('subscriptions');
-  });
-
-  it('falls back to a hint of the right type, then Other', () => {
-    expect(guessCategory('Sharma General', 'EXPENSE', 'healthcare')).toBe('healthcare');
-    expect(guessCategory('Sharma General', 'EXPENSE', 'salary')).toBe('other-expense');
-    expect(guessCategory('ACME PAYROLL', 'INCOME', 'other-income')).toBe('salary');
-  });
-});
-
 describe('markDuplicates', () => {
   const row = (overrides: Partial<ImportRow> = {}): ImportRow => ({
     key: 'row-0',
@@ -138,6 +105,7 @@ describe('markDuplicates', () => {
     date: '2026-11-11',
     description: 'Swiggy',
     categoryId: 'food',
+    categorySource: 'merchant',
     status: 'success',
     ...overrides,
   });

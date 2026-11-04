@@ -71,6 +71,9 @@
     <p class="dialog__text" aria-live="polite">
       Found {{ rows().length }} {{ rows().length === 1 ? 'payment' : 'payments' }}. Check each one; unticked rows won’t
       be added.
+      @if (unmatched()) {
+        {{ unmatched() }} {{ unmatched() === 1 ? 'needs' : 'need' }} a category.
+      }
     </p>
 
     <div class="import__table-wrap">
@@ -117,7 +120,7 @@
                   class="input"
                   [value]="item.row.description"
                   [attr.maxlength]="descriptionMax"
-                  (change)="setDescription(item.row.key, $event)"
+                  (change)="setDescription(item.row, $event)"
                   [attr.aria-label]="'Description of payment ' + (i + 1)"
                 />
                 @if (item.row.include && item.problem) {
@@ -149,6 +152,9 @@
                     </option>
                   }
                 </select>
+                <span class="import__source" [attr.data-source]="item.row.categorySource">{{
+                  sourceLabel[item.row.categorySource]
+                }}</span>
               </td>
               <td class="num">
                 <input
