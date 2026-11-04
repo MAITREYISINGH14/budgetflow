@@ -1,3 +1,4 @@
+'use strict';
 /**
  * /api/parse-upi-screenshots
  *
@@ -6,6 +7,10 @@
  * key, and nothing is stored: images are read once and dropped. The app shows every row
  * for review before anything is saved, and re-validates them all
  * (src/app/core/finance/screenshot-import.ts).
+ *
+ * Plain CommonJS JavaScript with the classic (req, res) handler on purpose: Vercel runs it
+ * as is, with no TypeScript build that could pick up the Angular project's compiler
+ * settings. It needs only Node's built-in fetch (Node 18+).
  *
  * Providers, chosen by which key is set (GEMINI_API_KEY wins if both are):
  *   GEMINI_API_KEY      Google Gemini. Free tier with no billing account; on that tier
@@ -24,6 +29,7 @@
 const MAX_IMAGES = 5;
 /** Vercel caps request bodies at 4.5 MB; the app shrinks screenshots well below this. */
 const MAX_TOTAL_BASE64 = 4_000_000;
+const MAX_BODY_BYTES = 4_500_000;
 const MEDIA_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const DEFAULT_CLAUDE_MODEL = 'claude-haiku-5-5';
 const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
@@ -46,9 +52,7 @@ const CATEGORY_HINTS = [
   'other-income',
 ];
 
-const SYSTEM_PROMPT = `You read screenshots of payment history lists from Indian UPI apps (Google Pay, PhonePe, Paytm, BHIM, bank apps) and record every payment row with the record_transactions tool.
-
-Rules:
+const RULES = `Rules:
 - One entry per payment row. Ignore headers, balances, offers, ads, rewards and buttons.
 - Mark a row partial=true if it is cut off at the top or bottom edge of the screenshot, or any of its name, amount or date is not fully readable.
 - amount: the rupee amount as a plain number without ₹ or commas (₹1,250.50 → 1250.5).
@@ -59,6 +63,13 @@ Rules:
 - name: the merchant or person as shown, at most 60 characters. Never include UPI IDs (anything with @), phone numbers, account or card numbers, or transaction IDs.
 - categoryHint: the best fit from this list: ${CATEGORY_HINTS.join(', ')}. Use an income category only for credits. Use other-expense or other-income for payments to or from people.
 - If a screenshot is not a UPI payment history, record no rows for it.`;
+
+const INTRO =
+  'You read screenshots of payment history lists from Indian UPI apps (Google Pay, PhonePe, Paytm, BHIM, bank apps) and record every payment row';
+const CLAUDE_PROMPT = `${INTRO} with the record_transactions tool.\n\n${RULES}`;
+const GEMINI_PROMPT = `${INTRO}.\n\n${RULES}`;
+
+const ROW_FIELDS = ['image', 'name', 'amount', 'direction', 'status', 'dateText', 'date', 'partial', 'categoryHint'];
 
 const TOOL = {
   name: 'record_transactions',
@@ -81,18 +92,13 @@ const TOOL = {
             partial: { type: 'boolean' },
             categoryHint: { type: 'string', enum: CATEGORY_HINTS },
           },
-          required: ['image', 'name', 'amount', 'direction', 'status', 'dateText', 'date', 'partial', 'categoryHint'],
+          required: ROW_FIELDS,
         },
       },
     },
     required: ['rows'],
   },
 };
-
-/** Reads an environment variable without depending on Node's type definitions. */
-function env(name: string): string | undefined {
-  return (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env[name];
-}
 
 /** The same rows as TOOL, in the schema format Gemini's structured output takes. */
 const GEMINI_SCHEMA = {
@@ -113,60 +119,79 @@ const GEMINI_SCHEMA = {
           partial: { type: 'BOOLEAN' },
           categoryHint: { type: 'STRING', enum: CATEGORY_HINTS },
         },
-        required: ['image', 'name', 'amount', 'direction', 'status', 'dateText', 'date', 'partial', 'categoryHint'],
+        required: ROW_FIELDS,
       },
     },
   },
   required: ['rows'],
 };
 
-type Provider = 'gemini' | 'anthropic';
-
-function provider(): Provider | null {
-  if (env('GEMINI_API_KEY')) return 'gemini';
-  if (env('ANTHROPIC_API_KEY')) return 'anthropic';
+function provider() {
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.ANTHROPIC_API_KEY) return 'anthropic';
   return null;
 }
 
-interface ImageInput {
-  mediaType: string;
-  data: string;
+/** A request header as one trimmed string ('' when missing). */
+function header(req, name) {
+  const value = req.headers[name];
+  const first = Array.isArray(value) ? value[0] : value;
+  return typeof first === 'string' ? first.split(',')[0].trim() : '';
 }
 
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-  });
+function send(res, status, body) {
+  res.statusCode = status;
+  res.setHeader('content-type', 'application/json');
+  res.setHeader('cache-control', 'no-store');
+  res.end(JSON.stringify(body));
 }
 
 /** Only the app's own pages may call this, so the endpoint cannot be used from other sites. */
-function sameOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin');
+function sameOrigin(req) {
+  const origin = header(req, 'origin');
   if (!origin) return true; // same-origin fetches from some browsers omit Origin on POST
+  const host = header(req, 'x-forwarded-host') || header(req, 'host');
   try {
-    return new URL(origin).host === new URL(request.url).host;
+    return new URL(origin).host === host;
   } catch {
     return false;
   }
 }
 
-function readBody(raw: unknown): { today: string; images: ImageInput[] } | string {
+/** The JSON body: Vercel may have parsed it already (req.body); otherwise read the stream. */
+async function readJson(req) {
+  if (req.body !== undefined && req.body !== null) {
+    if (typeof req.body === 'string') return JSON.parse(req.body);
+    if (Buffer.isBuffer(req.body)) return JSON.parse(req.body.toString('utf8'));
+    return req.body;
+  }
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES) throw new Error('Body too large');
+    chunks.push(chunk);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+}
+
+/** The checked request, or a message saying what is wrong with it. */
+function readBody(raw) {
   if (!raw || typeof raw !== 'object') return 'Send JSON with today and images.';
-  const body = raw as Record<string, unknown>;
-  const today = typeof body['today'] === 'string' ? body['today'] : '';
+  const today = typeof raw.today === 'string' ? raw.today : '';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(today)) return 'today must be a YYYY-MM-DD date.';
-  const images = Array.isArray(body['images']) ? body['images'] : [];
+  const images = Array.isArray(raw.images) ? raw.images : [];
   if (images.length === 0) return 'Add at least one screenshot.';
   if (images.length > MAX_IMAGES) return `Send at most ${MAX_IMAGES} screenshots at a time.`;
   let total = 0;
-  const clean: ImageInput[] = [];
+  const clean = [];
   for (const image of images) {
-    const item = image && typeof image === 'object' ? (image as Record<string, unknown>) : {};
-    const mediaType = String(item['mediaType'] ?? '');
-    const data = String(item['data'] ?? '');
-    if (!MEDIA_TYPES.includes(mediaType) || !/^[A-Za-z0-9+/=]+$/.test(data))
+    const item = image && typeof image === 'object' ? image : {};
+    const mediaType = String(item.mediaType ?? '');
+    const data = String(item.data ?? '');
+    if (!MEDIA_TYPES.includes(mediaType) || !/^[A-Za-z0-9+/=]+$/.test(data)) {
       return 'Each screenshot must be a JPEG, PNG or WebP image.';
+    }
     total += data.length;
     clean.push({ mediaType, data });
   }
@@ -174,58 +199,26 @@ function readBody(raw: unknown): { today: string; images: ImageInput[] } | strin
   return { today, images: clean };
 }
 
-/** Which provider is set up, so the app can tell people where their screenshots go. */
-export function GET(): Response {
-  return json({ provider: provider() });
-}
-
-export async function POST(request: Request): Promise<Response> {
-  const chosen = provider();
-  if (!chosen) return json({ error: 'Screenshot import is not set up on this deployment.' }, 503);
-  if (!sameOrigin(request)) return json({ error: 'Not allowed.' }, 403);
-
-  const accessCode = env('IMPORT_ACCESS_CODE');
-  if (accessCode && request.headers.get('x-import-code') !== accessCode) {
-    return json({ error: 'Enter the import access code in Settings to use screenshot import.' }, 401);
-  }
-
-  let parsed: ReturnType<typeof readBody>;
-  try {
-    parsed = readBody(await request.json());
-  } catch {
-    parsed = 'Send JSON with today and images.';
-  }
-  if (typeof parsed === 'string') return json({ error: parsed }, 400);
-
-  try {
-    const rows = chosen === 'gemini' ? await readWithGemini(parsed) : await readWithClaude(parsed);
-    return json({ rows });
-  } catch (error) {
-    if (error instanceof ProviderError) return json({ error: error.message }, error.status);
-    return json({ error: 'Could not reach the screenshot reader. Try again in a moment.' }, 502);
-  }
-}
-
 /** A provider failure with a message written for people. */
 class ProviderError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-  ) {
+  constructor(status, message) {
     super(message);
+    this.status = status;
   }
 }
 
-function failure(status: number, quotaMessage: string): ProviderError {
+function failure(status, quotaMessage) {
   if (status === 429) return new ProviderError(429, quotaMessage);
-  if (status === 401 || status === 403)
+  if (status === 401 || status === 403) {
     return new ProviderError(502, 'The AI service rejected the API key. Check it in Vercel.');
-  if (status === 404)
+  }
+  if (status === 404) {
     return new ProviderError(502, 'The AI model is not available to this key. Check the model setting.');
+  }
   return new ProviderError(502, 'The screenshots could not be read. Try again in a moment.');
 }
 
-async function readWithClaude({ today, images }: { today: string; images: ImageInput[] }): Promise<unknown[]> {
+async function readWithClaude({ today, images }) {
   const content = [
     ...images.flatMap((image, index) => [
       { type: 'text', text: `Screenshot ${index}:` },
@@ -237,13 +230,13 @@ async function readWithClaude({ today, images }: { today: string; images: ImageI
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      'x-api-key': env('ANTHROPIC_API_KEY') ?? '',
+      'x-api-key': process.env.ANTHROPIC_API_KEY || '',
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: env('ANTHROPIC_MODEL') || DEFAULT_CLAUDE_MODEL,
+      model: process.env.ANTHROPIC_MODEL || DEFAULT_CLAUDE_MODEL,
       max_tokens: 4096,
-      system: SYSTEM_PROMPT,
+      system: CLAUDE_PROMPT,
       tools: [TOOL],
       tool_choice: { type: 'tool', name: TOOL.name },
       messages: [{ role: 'user', content }],
@@ -251,13 +244,14 @@ async function readWithClaude({ today, images }: { today: string; images: ImageI
   });
   if (!response.ok)
     throw failure(response.status, 'Too many screenshots in a short time. Wait a minute and try again.');
-  const data = (await response.json()) as { content?: { type: string; name?: string; input?: { rows?: unknown } }[] };
-  const block = data.content?.find((c) => c.type === 'tool_use' && c.name === TOOL.name);
-  return Array.isArray(block?.input?.rows) ? block.input.rows : [];
+  const data = await response.json();
+  const block = (data.content || []).find((c) => c.type === 'tool_use' && c.name === TOOL.name);
+  const rows = block && block.input && block.input.rows;
+  return Array.isArray(rows) ? rows : [];
 }
 
-async function readWithGemini({ today, images }: { today: string; images: ImageInput[] }): Promise<unknown[]> {
-  const model = env('GEMINI_MODEL') || DEFAULT_GEMINI_MODEL;
+async function readWithGemini({ today, images }) {
+  const model = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   const parts = [
     ...images.flatMap((image, index) => [
       { text: `Screenshot ${index}:` },
@@ -269,9 +263,9 @@ async function readWithGemini({ today, images }: { today: string; images: ImageI
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
     {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': env('GEMINI_API_KEY') ?? '' },
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY || '' },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT.replace(' with the record_transactions tool', '') }] },
+        systemInstruction: { parts: [{ text: GEMINI_PROMPT }] },
         contents: [{ role: 'user', parts }],
         generationConfig: { responseMimeType: 'application/json', responseSchema: GEMINI_SCHEMA, temperature: 0 },
       }),
@@ -285,12 +279,58 @@ async function readWithGemini({ today, images }: { today: string; images: ImageI
       'The free AI quota is used up for now. Wait a minute (or until tomorrow) and try again.',
     );
   }
-  const data = (await response.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? '';
+  const data = await response.json();
+  const candidate = data.candidates && data.candidates[0];
+  const text = ((candidate && candidate.content && candidate.content.parts) || []).map((p) => p.text || '').join('');
   try {
-    const rows = (JSON.parse(text) as { rows?: unknown }).rows;
+    const rows = JSON.parse(text).rows;
     return Array.isArray(rows) ? rows : [];
   } catch {
     return [];
   }
 }
+
+async function handler(req, res) {
+  try {
+    if (req.method === 'GET') {
+      send(res, 200, { provider: provider() });
+      return;
+    }
+    if (req.method !== 'POST') {
+      res.setHeader('allow', 'GET, POST');
+      send(res, 405, { error: 'Method not allowed.' });
+      return;
+    }
+
+    const chosen = provider();
+    if (!chosen) return send(res, 503, { error: 'Screenshot import is not set up on this deployment.' });
+    if (!sameOrigin(req)) return send(res, 403, { error: 'Not allowed.' });
+    const accessCode = process.env.IMPORT_ACCESS_CODE;
+    if (accessCode && header(req, 'x-import-code') !== accessCode) {
+      return send(res, 401, { error: 'Enter the import access code in Settings to use screenshot import.' });
+    }
+
+    let parsed;
+    try {
+      parsed = readBody(await readJson(req));
+    } catch {
+      parsed = 'Send JSON with today and images.';
+    }
+    if (typeof parsed === 'string') return send(res, 400, { error: parsed });
+
+    try {
+      const rows = chosen === 'gemini' ? await readWithGemini(parsed) : await readWithClaude(parsed);
+      send(res, 200, { rows });
+    } catch (error) {
+      if (error instanceof ProviderError) return send(res, error.status, { error: error.message });
+      send(res, 502, { error: 'Could not reach the screenshot reader. Try again in a moment.' });
+    }
+  } catch (error) {
+    // Last resort: never fall through to the platform's blank error page. The details go
+    // to the deployment's logs (never the API key, which is not part of any error here).
+    console.error('parse-upi-screenshots failed:', error);
+    if (!res.headersSent) send(res, 500, { error: 'Screenshot import hit an unexpected error. Try again.' });
+  }
+}
+
+module.exports = handler;

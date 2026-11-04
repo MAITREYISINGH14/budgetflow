@@ -4,7 +4,7 @@ import { catchError, map, Observable, of } from 'rxjs';
 import { SettingsService } from '../services/settings.service';
 import { ShrunkImage } from '../utils/image';
 
-/** The app's own serverless function (api/parse-upi-screenshots.ts); same origin, so the CSP allows it. */
+/** The app's own serverless function (api/parse-upi-screenshots.js); same origin, so the CSP allows it. */
 export const SCREENSHOT_IMPORT_URL = '/api/parse-upi-screenshots';
 export const MAX_SCREENSHOTS = 5;
 

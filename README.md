@@ -83,7 +83,7 @@ The demo data adds 72 transactions and 19 budgets over the last six months, base
 
 ## Screenshot import setup
 
-Screenshot import runs in a Vercel serverless function (`api/parse-upi-screenshots.ts`), so the API key never reaches the browser. It works with either of two AI services; set the key for one of them.
+Screenshot import runs in a Vercel serverless function (`api/parse-upi-screenshots.js`), so the API key never reaches the browser. It works with either of two AI services; set the key for one of them.
 
 **Free: Google Gemini** (no billing account needed)
 
