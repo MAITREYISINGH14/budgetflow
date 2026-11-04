@@ -4,7 +4,7 @@
   @if (step() === 'pick' || step() === 'reading') {
     <p class="dialog__text">
       Take screenshots of the payment history list in your UPI app (Google Pay, PhonePe, Paytm or your bank’s app), then
-      choose up to {{ maxScreenshots }}. You’ll check every payment before anything is added.
+      choose up to {{ maxScreenshots }}.
     </p>
 
     <div class="import__pick">
@@ -41,7 +41,7 @@
       }
     </div>
 
-    <p class="field__hint import__privacy">
+    <!-- <p class="field__hint import__privacy">
       @switch (provider()) {
         @case ('gemini') {
           Screenshots are sent to Google Gemini to be read. On Gemini’s free tier, Google may use what is sent to
@@ -55,7 +55,7 @@
         }
       }
       BudgetFlow keeps only the date, amount, type, category and a short name; UPI IDs and phone numbers are removed.
-    </p>
+    </p> -->
 
     @if (error(); as message) {
       <p class="form-error" role="alert">{{ message }}</p>

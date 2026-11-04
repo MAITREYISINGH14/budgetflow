@@ -89,7 +89,12 @@
             @for (item of attention(); track item.key) {
               <li class="attention__item" [attr.data-tone]="item.tone">
                 <span class="material-symbols-outlined attention__icon" aria-hidden="true">{{ item.icon }}</span>
-                <span class="attention__text">{{ item.message }}</span>
+                <span class="attention__text"
+                  >{{ item.message }}
+                  @if (item.detail) {
+                    <span class="attention__detail">{{ item.detail }}</span>
+                  }
+                </span>
                 <a
                   class="attention__action"
                   [routerLink]="item.action.path"
@@ -130,9 +135,22 @@
             @for (row of categories(); track row.categoryId) {
               <li>
                 <div class="categories__row">
-                  <a class="categories__name" routerLink="/transactions" [queryParams]="categoryLink(row.categoryId)">{{
-                    row.name
-                  }}</a>
+                  <span class="categories__who"
+                    ><a
+                      class="categories__name"
+                      routerLink="/transactions"
+                      [queryParams]="categoryLink(row.categoryId)"
+                      >{{ row.name }}</a
+                    >
+                    @if (row.budget && (row.budget.status === 'EXCEEDED' || row.budget.status === 'NEAR_LIMIT')) {
+                      <span class="badge" [attr.data-tone]="statusMeta[row.budget.status].tone">
+                        <span class="material-symbols-outlined" aria-hidden="true">{{
+                          statusMeta[row.budget.status].icon
+                        }}</span>
+                        {{ statusMeta[row.budget.status].label }}
+                      </span>
+                    }
+                  </span>
                   <span class="categories__figures">
                     <strong>{{ row.spent | money }}</strong>
                     @if (row.budget && row.budget.status !== 'NO_LIMIT') {

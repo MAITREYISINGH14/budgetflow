@@ -18,6 +18,8 @@ export interface AttentionItem {
   tone: 'danger' | 'warn';
   icon: string;
   message: string;
+  /** The numbers behind the message, e.g. "₹6,950 of ₹7,000"; shown under it. */
+  detail?: string;
   action: AttentionAction;
 }
 
@@ -53,6 +55,7 @@ export function attentionItems(
       tone: 'danger',
       icon: 'error',
       message: `${b.category.name} is ${format(Math.abs(b.remaining))} over budget.`,
+      detail: `${format(b.spent)} of ${format(b.limit)}`,
       action: categoryLink(b.categoryId),
     }));
 
@@ -64,6 +67,7 @@ export function attentionItems(
       tone: 'warn',
       icon: 'warning',
       message: `${b.category.name} has used ${Math.floor(b.percentageUsed)}% of its budget.`,
+      detail: `${format(b.spent)} of ${format(b.limit)}`,
       action: categoryLink(b.categoryId),
     }));
 

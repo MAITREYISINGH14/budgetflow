@@ -285,6 +285,14 @@
   }
 }
 
+.attention__detail {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .attention__action {
   display: inline-flex;
   align-items: center;
@@ -337,10 +345,20 @@
   list-style: none;
 }
 
+.categories__who {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.625rem;
+  min-width: 0;
+}
+
 .categories__row {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.25rem 0.75rem;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
 }

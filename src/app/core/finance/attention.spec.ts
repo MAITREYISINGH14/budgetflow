@@ -96,6 +96,35 @@ describe('attentionItems', () => {
     expect(items[1].key).toBe('up-shopping');
   });
 
+  it('shows the amounts behind budget items, and nothing extra for the rest', () => {
+    const items = attentionItems(
+      [
+        budget({
+          id: '3',
+          categoryId: 'shopping',
+          category: shopping,
+          status: 'EXCEEDED',
+          limit: 6000,
+          spent: 8400,
+          remaining: -2400,
+        }),
+        budget({
+          id: '4',
+          categoryId: 'bills',
+          category: bills,
+          status: 'NEAR_LIMIT',
+          limit: 7000,
+          spent: 6950,
+          remaining: 50,
+          percentageUsed: 99.2,
+        }),
+      ],
+      [{ kind: 'OVERSPENT_INCOME', severity: 'WARNING', amount: 1500 }],
+      format,
+    );
+    expect(items.map((i) => i.detail)).toEqual(['₹8,400 of ₹6,000', '₹6,950 of ₹7,000', undefined]);
+  });
+
   it('is empty when nothing needs attention', () => {
     expect(attentionItems([budget({}), budget({ id: '2', status: 'NO_LIMIT' })], [], format)).toEqual([]);
   });

@@ -12,6 +12,7 @@ import { CurrencyService } from '../../core/services/currency.service';
 import { ToastService } from '../../core/services/toast.service';
 import { FinanceStore } from '../../core/state/finance-store';
 import { formatMonth, monthBounds, toIsoMonth, yearMonthOf } from '../../core/utils/dates';
+import { BUDGET_STATUS_META } from '../../core/utils/budget-display';
 import { describeInsight } from '../../core/utils/insight-text';
 import { categoryThisMonth } from '../../core/utils/transaction-filters';
 import { BudgetMeter } from '../../shared/components/budget-meter';
@@ -139,6 +140,7 @@ export class DashboardPage {
 
   private readonly overview = computed(() => categoryOverview(this.monthTransactions(), this.monthBudgets()));
   protected readonly categoryLink = categoryThisMonth;
+  protected readonly statusMeta = BUDGET_STATUS_META;
 
   // At most ten expense categories exist, so the whole list fits without a "show all".
   protected readonly categories = computed(() => this.overview().rows);
